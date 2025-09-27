@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import '../components/AuthLayout.css'
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -17,7 +19,7 @@ const Login = () => {
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
-        const response = await axios.get('/api/auth/verify', { withCredentials: true })
+        const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
         
         if (response.data.success) {
           // User is already logged in, redirect to home
@@ -58,7 +60,7 @@ const Login = () => {
     setError('')
     
     try {
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password
       }, {

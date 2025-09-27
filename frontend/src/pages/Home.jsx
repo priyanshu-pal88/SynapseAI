@@ -21,6 +21,7 @@ import {
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
@@ -67,7 +68,7 @@ const Home = () => {
   // Check if user is authenticated
   const checkAuthentication = async () => {
     try {
-      const response = await axios.get('/api/auth/verify', { withCredentials: true })
+      const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
       // console.log('Authentication check response:', response.data)
       
       if (response.data.success) {
@@ -96,7 +97,7 @@ const Home = () => {
     if (!isAuthenticated) return
 
     // console.log('Loading chats for authenticated user...')
-    axios.get('/api/chat', { withCredentials: true })
+    axios.get(`${API_BASE_URL}/api/chat`, { withCredentials: true })
       .then((res) => {
         console.log('Chats loaded successfully:', res.data);
         dispatch(setChats(res.data.chats.reverse()))
@@ -104,7 +105,7 @@ const Home = () => {
         console.log('GET /api/chat failed:', err?.response?.status, err?.response?.data || err?.message)
       })
 
-    const newSocket = io('http://localhost:3000', {
+    const newSocket = io(API_BASE_URL, {
       withCredentials: true
     });
 
@@ -222,7 +223,7 @@ const Home = () => {
     const titles = hasDraft ? input.trim().slice(0, 30) : 'New chat'
 
     try {
-      const res = await axios.post('/api/chat', { title: titles }, { withCredentials: true })
+      const res = await axios.post(`${API_BASE_URL}/api/chat`, { title: titles }, { withCredentials: true })
  
       serverId = res?.data?.chat?._id || res?.data?._id || ''
       serverTitle = res?.data?.chat?.title || res?.data?.title || ''
@@ -277,7 +278,7 @@ const Home = () => {
 
 
     try {
-      await axios.delete(`/api/chat/${chatId}`, { withCredentials: true })
+      await axios.delete(`${API_BASE_URL}/api/chat/${chatId}`, { withCredentials: true })
       console.log('Chat deleted successfully from server')
 
       dispatch(deleteChatAction(chatId))
@@ -348,7 +349,7 @@ const Home = () => {
     
     try {
       // Clear authentication token by making logout request to server
-      await axios.post('/api/auth/logout', {}, { withCredentials: true })
+      await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true })
       
       // Clear local storage
       localStorage.removeItem('chats_v1')
