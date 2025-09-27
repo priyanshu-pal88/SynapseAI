@@ -1,0 +1,180 @@
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px;
+  padding-bottom: 120px; /* space for sticky input bar */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 768px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+/* Custom thin scrollbar styling positioned further right */
+.messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+  margin-right: -4px; /* Push track further right */
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 4px;
+  border-right: 2px solid transparent; /* Add space on the right */
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+  background: var(--text);
+  opacity: 0.8;
+}
+
+/* Firefox scrollbar styling */
+.messages {
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
+}
+
+.message {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  /* shrink message row to its content so we can left/right align the whole row */
+  width: fit-content;
+  max-width: 85%;
+}
+
+.message .avatar { 
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 64px;
+  margin-top: 2px;
+}
+
+.bubble {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 0;
+  line-height: 1.6;
+  color: var(--text);
+  font-size: 15px;
+  /* shrink to content so left/right alignment is visible */
+  display: inline-block;
+  width: fit-content;
+  /* cap bubble width to a readable measure while staying responsive */
+  max-width: min(70ch, 85vw);
+  /* wrap long words/URLs gracefully */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  border-radius: 14px;
+  padding: 10px 14px;
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--glass-shadow);
+}
+
+.bubble.error { 
+  color: var(--danger);
+}
+
+.message.user {
+  align-self: flex-start;
+}
+
+.message.user .bubble {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.message.user .avatar {
+  order: -1;
+}
+
+/* Align AI/assistant messages to the right side */
+.message.assistant,
+.message.ai {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message.assistant .bubble,
+.message.ai .bubble {
+  background: var(--glass-bg);
+  color: white;
+  /* border: 1px solid var(--primary); */
+}
+
+/* Typing animation styles */
+.typing-bubble {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.typing-animation {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text);
+  opacity: 0.4;
+  animation: typing-bounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* Legacy typing styles for fallback */
+.typing { 
+  opacity: 0.7; 
+  font-style: italic; 
+  margin-left: 6px; 
+}
+
+.empty-state {
+  text-align: center;
+  margin-top: 20vh;
+  color: var(--text);
+}
+
+.empty-state h2 {
+  font-size: 28px;
+  font-weight: 400;
+  margin: 0;
+}
