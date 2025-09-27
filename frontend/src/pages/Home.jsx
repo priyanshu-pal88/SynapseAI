@@ -68,11 +68,11 @@ const Home = () => {
   const checkAuthentication = async () => {
     try {
       const response = await axios.get('/api/auth/verify', { withCredentials: true })
-      console.log('Authentication check response:', response.data)
+      // console.log('Authentication check response:', response.data)
       
       if (response.data.success) {
         setIsAuthenticated(true)
-        console.log('User authenticated successfully')
+        // console.log('User authenticated successfully')
       } else {
         setIsAuthenticated(false)
         navigate('/login')
@@ -95,7 +95,7 @@ const Home = () => {
     // Only load chats and setup socket if authenticated
     if (!isAuthenticated) return
 
-    console.log('Loading chats for authenticated user...')
+    // console.log('Loading chats for authenticated user...')
     axios.get('/api/chat', { withCredentials: true })
       .then((res) => {
         console.log('Chats loaded successfully:', res.data);
@@ -110,7 +110,7 @@ const Home = () => {
 
     // Handle typing indicator
     newSocket.on("ai-typing", (payload) => {
-      console.log("AI typing indicator received:", payload);
+      // console.log("AI typing indicator received:", payload);
       if (payload.typing) {
         setMessage((prevMessages) => {
           // Remove any existing typing indicator first
@@ -131,7 +131,7 @@ const Home = () => {
     });
 
     newSocket.on("ai-response", (messagePayload) => {
-      console.log("AI response received:", messagePayload);
+      // console.log("AI response received:", messagePayload);
       setMessage((prevMessages) => {
         // Remove typing indicator and add actual response
         const withoutTyping = prevMessages.filter(m => !m.typing);
