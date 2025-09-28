@@ -12,39 +12,39 @@ const Login = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  // const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const navigate = useNavigate()
 
   // Check if user is already authenticated
-  // useEffect(() => {
-  //   const checkAuthentication = async () => {
-  //     try {
-  //       const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
         
-  //       if (response.data.success) {
-  //         // User is already logged in, redirect to home
-  //         navigate('/')
-  //       }
-  //     } catch (error) {
-  //       // User is not authenticated, stay on login page
-  //       console.log('User not authenticated')
-  //     } finally {
-  //       setIsCheckingAuth(false)
-  //     }
-  //   }
+        if (response.data.success) {
+          // User is already logged in, redirect to home
+          navigate('/')
+        }
+      } catch (error) {
+        // User is not authenticated, stay on login page
+        console.log('User not authenticated')
+      } finally {
+        setIsCheckingAuth(false)
+      }
+    }
 
-  //   checkAuthentication()
-  // }, [navigate])
+    checkAuthentication()
+  }, [navigate])
 
   // Show loading screen while checking authentication
-  // if (isCheckingAuth) {
-  //   return (
-  //     <div className="auth-loading">
-  //       <div className="loading-spinner"></div>
-  //       <p>Checking authentication...</p>
-  //     </div>
-  //   )
-  // }
+  if (isCheckingAuth) {
+    return (
+      <div className="auth-loading">
+        <div className="loading-spinner"></div>
+        <p>Checking authentication...</p>
+      </div>
+    )
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target

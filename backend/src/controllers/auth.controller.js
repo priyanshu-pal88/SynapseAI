@@ -19,38 +19,52 @@ async function registerUser(req, res) {
         password: hashedPassword
     });
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.cookie("token", token)
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // true only on HTTPS
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
 
-    res.status(201).json({ message: "User registered successfully", user :{
-        email : user.email,
-        _id : user._id,
-        fullName : user.fullName
+    res.status(201).json({
+        message: "User registered successfully", user: {
+            email: user.email,
+            _id: user._id,
+            fullName: user.fullName
 
-    } });
+        }
+    });
 }
 
-async function loginUser(req,res) {
-    const {email,password} = req.body
+async function loginUser(req, res) {
+    const { email, password } = req.body
 
-    const user = await userModel.findOne({email})
+    const user = await userModel.findOne({ email })
 
-    if(!user){
-        return res.status(400).json({message : "Invalid email or password"})
+    if (!user) {
+        return res.status(400).json({ message: "Invalid email or password" })
     }
 
-    const isPasswordValid = await bcrypt.compare(password,user.password)
+    const isPasswordValid = await bcrypt.compare(password, user.password)
 
-    if(!isPasswordValid){
-        return res.status(400).json({message : "Invalid email or password"})
+    if (!isPasswordValid) {
+        return res.status(400).json({ message: "Invalid email or password" })
 
     }
-    const token = jwt.sign({id : user._id},process.env.JWT_SECRET)
-    res.cookie("token",token)
-    res.status(200).json({message : "Login successful",user : {
-        email : user.email,
-        _id : user._id,
-        fullName : user.fullName
-    }})
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // true only on HTTPS
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
+    res.status(200).json({
+        message: "Login successful", user: {
+            email: user.email,
+            _id: user._id,
+            fullName: user.fullName
+        }
+    })
 
 }
 
@@ -62,14 +76,14 @@ async function logoutUser(req, res) {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax'
         });
-        
-        res.status(200).json({ 
-            message: "Logout successful" 
+
+        res.status(200).json({
+            message: "Logout successful"
         });
     } catch (error) {
-        res.status(500).json({ 
-            message: "Error during logout", 
-            error: error.message 
+        res.status(500).json({
+            message: "Error during logout",
+            error: error.message
         });
     }
 }
@@ -79,7 +93,7 @@ async function verifyUser(req, res) {
         // If we reach here, the auth middleware has already verified the token
         // and attached the user to req.user
         const user = req.user;
-        
+
         res.status(200).json({
             success: true,
             message: "User is authenticated",
@@ -91,10 +105,10 @@ async function verifyUser(req, res) {
         });
     } catch (error) {
         console.error('Verify user error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
-            message: "Error verifying user", 
-            error: error.message 
+            message: "Error verifying user",
+            error: error.message
         });
     }
 }
