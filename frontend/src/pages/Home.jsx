@@ -245,7 +245,7 @@ const Home = () => {
   const getMessages = async (chatId) => {
     console.log('Fetching messages for chatId:', chatId)
     try {
-      const response = await axios.get(`http://localhost:3000/api/chat/messages/${chatId}`, { withCredentials: true })
+      const response = await axios.get(`${API_BASE_URL}/api/chat/messages/${chatId}`, { withCredentials: true })
       console.log('Messages response:', response);
 
       if (response.data && response.data.messages) {
@@ -278,7 +278,7 @@ const Home = () => {
 
 
     try {
-      await axios.delete(`${API_BASE_URL}/api/chat/${chatId}`, { withCredentials: true })
+      await axios.delete(`${API_BASE_URL}/api/chat/messages/${chatId}`, { withCredentials: true })
       console.log('Chat deleted successfully from server')
 
       dispatch(deleteChatAction(chatId))
@@ -299,7 +299,7 @@ const Home = () => {
   async function handleRenameChat(chatId, newTitle) {
     try {
       // Update on server
-      await axios.patch(`/api/chat/${chatId}`, { title: newTitle }, { withCredentials: true })
+      await axios.patch(`${API_BASE_URL}/api/chat/${chatId}`, { title: newTitle }, { withCredentials: true })
       
       // Update local state
       const updatedChats = chats.map(chat => {
