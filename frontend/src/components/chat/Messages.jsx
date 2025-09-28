@@ -11,18 +11,29 @@ const Messages = ({ message }) => {
     }
   }, [message])
 
+  const hasMessages = message && message.length > 0
+  const messagesClass = `messages ${hasMessages ? 'has-messages' : 'empty'}`
+
   return (
-    <div className="messages" role="log" aria-live="polite">
+    <div className={messagesClass} role="log" aria-live="polite">
       {(!message || message.length === 0) && (
         <div className="empty-state">
-          <h2>What's on the agenda today?</h2>
+          <div className="logo-container">
+            <img 
+              src="/SynapseAI.png" 
+              alt="Synapse AI" 
+              className="synapse-logo"
+            />
+          </div>
+          <h2>Ready to explore ideas with Synapse AI?</h2>
+          <p>Start a conversation and let's create something amazing together.</p>
         </div>
       )}
 
       {message && message.map((m, index) => (
         <div key={m.id || `message-${index}`} className={`message ${m.role || m.type}`}>
           <div className="avatar" aria-hidden>
-            {(m.role === 'user' || m.type === 'user') ? 'You' : 'ChatGPT'}
+            {(m.role === 'user' || m.type === 'user') ? 'You' : 'Synapse AI'}
           </div>
           <div className={`bubble ${m.error ? 'error' : ''} ${m.typing ? 'typing-bubble' : ''}`}>
             {m.typing ? (

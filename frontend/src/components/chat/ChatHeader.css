@@ -8,6 +8,7 @@
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-shadow);
   height: 60px;
+  overflow: visible;
 }
 
 .spacer { flex: 1; }
@@ -17,7 +18,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  animation: logoFadeIn 0.8s ease-out;
+  position: relative;
+  transform: translateY(3px);
 }
 
 .logo-wrapper {
@@ -25,11 +27,14 @@
   width: 48px;
   height: 48px;
   cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo-wrapper:hover {
-  transform: scale(1.05) rotate(5deg);
+  transform: none;
 }
 
 .logo-image {
@@ -38,7 +43,8 @@
   object-fit: contain;
   border-radius: 8px;
   transition: filter 0.3s ease;
-  animation: logoFloat 4s ease-in-out infinite;
+  background: transparent;
+
 }
 
 .logo-wrapper:hover .logo-image {
@@ -47,7 +53,7 @@
 
 .logo-glow {
   position: absolute;
-  inset: -4px;
+  inset: 0;
   background: conic-gradient(
     from 0deg,
     transparent,
@@ -57,11 +63,10 @@
     #06d6a0,
     transparent
   );
-  border-radius: 12px;
+  border-radius: 8px;
   opacity: 0;
-  animation: logoGlow 3s ease-in-out infinite;
   z-index: -1;
-  filter: blur(8px);
+  filter: blur(4px);
 }
 
 .logo-wrapper:hover .logo-glow {
@@ -85,18 +90,18 @@
 
 .logo-container:hover .logo-text {
   opacity: 1;
-  transform: translateY(-1px);
+  transform: none;
 }
 
 /* Animations */
 @keyframes logoFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(3px);
   }
 }
 
@@ -105,7 +110,7 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 }
 
@@ -123,11 +128,11 @@
 @keyframes logoGlowHover {
   0%, 100% {
     opacity: 0.4;
-    transform: rotate(0deg) scale(1);
+    transform: rotate(0deg);
   }
   50% {
-    opacity: 0.8;
-    transform: rotate(180deg) scale(1.1);
+    opacity: 0.6;
+    transform: rotate(180deg);
   }
 }
 

@@ -13,7 +13,6 @@ const { createMemory, queryMemory } = require("../services/vector.service");
 function initSocketServer(httpServer) {
     const io = new Server(httpServer, {
         cors: {
-            // origin: process.env.FRONTEND_URL || "http://localhost:5173",
             origin : "https://synapse-ai-black.vercel.app",
             allowedHeaders: ["my-custom-header"],
             credentials: true

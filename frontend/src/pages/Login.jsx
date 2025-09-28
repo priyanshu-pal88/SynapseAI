@@ -4,6 +4,7 @@ import axios from 'axios'
 import '../components/AuthLayout.css'
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+// const API_BASE_URL =  'http://localhost:3000'
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -95,6 +96,13 @@ const Login = () => {
   return (
     <div className="auth-container">
       <form onSubmit={handleSubmit} className="auth-form">
+        <div className="auth-logo-container">
+          <img 
+            src="/SynapseAI.png" 
+            alt="Synapse AI" 
+            className="auth-logo"
+          />
+        </div>
         <h2>Welcome back</h2>
         
         {error && (

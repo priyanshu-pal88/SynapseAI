@@ -6,6 +6,7 @@ import ChatHeader from '../components/chat/ChatHeader'
 import Messages from '../components/chat/Messages'
 import InputBar from '../components/chat/InputBar'
 import { useDispatch, useSelector } from 'react-redux'
+import './Home.css'
 import {
   selectChats,
   selectCurrentChatId,
@@ -22,6 +23,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+// const API_BASE_URL =  'http://localhost:3000'
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
@@ -387,7 +389,11 @@ const Home = () => {
   }
 
   return (
-    <div className={containerClass}>
+    <div className={`${containerClass} modern-home`}>
+      {/* ✨ Floating Orbs for Visual Enhancement */}
+      <div className="floating-orb"></div>
+      <div className="floating-orb"></div>
+      <div className="floating-orb"></div>
 
       <ChatSidebar
         id="chat-sidebar"

@@ -25,7 +25,7 @@ const InputBar = ({ value, onChange, onSend, disabled }) => {
         </button>
       </div>
       <div className="input-helper">
-        ChatGPT can make mistakes. Check important info. Press Enter to send, Shift+Enter for new line.
+        Synapse can make mistakes. Check important info. Press Enter to send, Shift+Enter for new line.
       </div>
     </div>
   )

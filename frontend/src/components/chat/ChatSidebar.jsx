@@ -74,17 +74,28 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
   return (
     <aside id={id} className={`chat-sidebar ${open ? 'open' : 'closed'}`} ref={sidebarRef}>
       <div className="sidebar-top">
-        <h3>Chats</h3>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn small" onClick={onNewChat} title="Start a new chat">＋ New</button>
-          <button
-            className="btn small close-btn"
-            onClick={onClose}
-            aria-label="Close sidebar"
-            title="Close sidebar"
-          >
-            ×
-          </button>
+        <div className="sidebar-header">
+          <div className="sidebar-logo-container">
+            <img 
+              src="/SynapseAI.png" 
+              alt="Synapse AI" 
+              className="sidebar-logo"
+            />
+          </div>
+          <div className="sidebar-actions">
+            <button className="btn small" onClick={onNewChat} title="Start a new session">
+              <i className="ri-add-line"></i>
+              New Session
+            </button>
+            <button
+              className="btn small close-btn"
+              onClick={onClose}
+              aria-label="Close sidebar"
+              title="Close sidebar"
+            >
+              <i className="ri-close-line"></i>
+            </button>
+          </div>
         </div>
       </div>
       <div className="chat-list">
@@ -122,7 +133,7 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
                   title="Chat options"
                   aria-label={`Options for ${c.title}`}
                 >
-                  ⋯
+                  <i className="ri-more-2-line"></i>
                 </button>
                 
                 {isMenuOpen && (
@@ -131,12 +142,14 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
                       className="dropdown-item"
                       onClick={(e) => handleRenameClick(e, chatId, c.title)}
                     >
+                      <i className="ri-edit-line"></i>
                       Rename
                     </button>
                     <button
                       className="dropdown-item delete"
                       onClick={(e) => handleDeleteClick(e, chatId)}
                     >
+                      <i className="ri-delete-bin-line"></i>
                       Delete
                     </button>
                   </div>
@@ -164,18 +177,43 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
                 className="btn-cancel" 
                 onClick={handleCancelDelete}
               >
+                <i className="ri-close-line"></i>
                 Cancel
               </button>
               <button 
                 className="btn-delete" 
                 onClick={handleConfirmDelete}
               >
+                <i className="ri-delete-bin-line"></i>
                 Delete
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Sidebar Footer */}
+      <div className="sidebar-footer">
+        <div className="footer-content">
+          <div className="footer-branding">
+            <img src="/SynapseAI.png" alt="Synapse AI" className="footer-logo" />
+            <div className="footer-text">
+              <h4>Synapse AI</h4>
+              <p>Intelligent conversations, limitless possibilities</p>
+            </div>
+          </div>
+          <div className="footer-stats">
+            <div className="stat-item">
+              <i className="ri-chat-3-line"></i>
+              <span>{chats?.length || 0} conversations</span>
+            </div>
+            <div className="stat-item">
+              <i className="ri-sparkling-line"></i>
+              <span>Powered by AI</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </aside>
   )
 }

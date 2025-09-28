@@ -17,7 +17,6 @@ const Register = () => {
   const [error, setError] = useState('')
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
-  // Check if user is already authenticated
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
@@ -104,6 +103,7 @@ const Register = () => {
   return (
     <div className="auth-container">
       <form onSubmit={handleSubmit} className="auth-form">
+
         <h2>Create your account</h2>
         
         {error && (

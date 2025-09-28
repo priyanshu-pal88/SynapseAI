@@ -18,7 +18,7 @@ const ChatHeader = ({ sidebarOpen, onToggleSidebar, onLogout }) => {
       <div className="logo-container">
         <div className="logo-wrapper">
           <img 
-            src="" 
+            src="/SynapseAI.png" 
             alt="SynapseAI Logo" 
             className="logo-image"
           />

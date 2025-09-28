@@ -50,7 +50,7 @@
   align-items: flex-start;
   /* shrink message row to its content so we can left/right align the whole row */
   width: fit-content;
-  max-width: 85%;
+  max-width: 95%;
 }
 
 .message .avatar { 
@@ -72,7 +72,7 @@
   display: inline-block;
   width: fit-content;
   /* cap bubble width to a readable measure while staying responsive */
-  max-width: min(70ch, 85vw);
+  max-width: min(100ch, 95vw);
   /* wrap long words/URLs gracefully */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
