@@ -69,6 +69,7 @@ const Home = () => {
 
   // Check if user is authenticated
   const checkAuthentication = async () => {
+    const start = Date.now()
     try {
       const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
       // console.log('Authentication check response:', response.data)
@@ -85,7 +86,10 @@ const Home = () => {
       setIsAuthenticated(false)
       navigate('/login')
     } finally {
-      setIsCheckingAuth(false)
+      const elapsed = Date.now() - start
+      const minDisplay = 400
+      const delay = Math.max(0, minDisplay - elapsed)
+      setTimeout(() => setIsCheckingAuth(false), delay)
     }
   }
 
@@ -370,7 +374,8 @@ const Home = () => {
     setShowLogoutModal(false)
   }
 
-  const containerClass = `chat-layout ${sidebarOpen ? '' : 'no-sidebar'}`
+  // Add 'sidebar-open' class when sidebar is open so mobile CSS shows it
+  const containerClass = `chat-layout ${sidebarOpen ? 'sidebar-open' : 'no-sidebar'}`
 
   // Show loading screen while checking authentication
   if (isCheckingAuth) {

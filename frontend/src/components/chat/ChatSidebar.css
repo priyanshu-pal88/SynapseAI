@@ -20,7 +20,8 @@
     max-width: 320px;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
-    z-index: 200;
+    /* Ensure sidebar sits above the backdrop (which is z-index: 998) */
+    z-index: 1001;
     height: 100vh;
     overflow: hidden;
   }
@@ -34,7 +35,8 @@
 }
 
 .chat-list {
-  flex: 1;
+  /* Grow to fill available space so footer stays at bottom */
+  flex: 1 1 auto;
   overflow-y: auto; /* Force scrollbar to always show */
   overflow-x: hidden;
   display: flex;
@@ -350,8 +352,9 @@
 
 /* Sidebar Footer */
 .sidebar-footer {
+  /* Stick footer to the bottom of the flex column */
   margin-top: auto;
-  padding: 12px 16px 8px 16px;
+  padding: 12px 16px calc(8px + env(safe-area-inset-bottom)) 16px;
   background: transparent;
 }
 
