@@ -1,8 +1,18 @@
 const { GoogleGenAI } = require("@google/genai");
 
-const ai = new GoogleGenAI({});
+if (!process.env.GEMINI_API_KEY) {
+  console.error('GEMINI_API_KEY is missing from environment variables');
+}
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY
+});
 
 async function generateResponse(content) {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is missing. Add it to your backend environment variables.');
+  }
+
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: content,
