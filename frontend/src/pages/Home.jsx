@@ -138,9 +138,8 @@ const Home = () => {
     });
 
     newSocket.on("ai-response", (messagePayload) => {
-      // console.log("AI response received:", messagePayload);
+      setIsSending(false)
       setMessage((prevMessages) => {
-        // Remove typing indicator and add actual response
         const withoutTyping = prevMessages.filter(m => !m.typing);
         return [...withoutTyping, {
           id: uid(),
@@ -149,7 +148,42 @@ const Home = () => {
           ts: Date.now()
         }];
       });
-      dispatch(addMessage(activeChatId, messagePayload.content))
+      if (messagePayload?.chat) {
+        dispatch(addMessage({ chatId: messagePayload.chat, message: {
+          id: uid(),
+          role: 'assistant',
+          content: messagePayload.content,
+          ts: Date.now(),
+        } }))
+      }
+    })
+
+    newSocket.on("ai-error", (payload) => {
+      setIsSending(false)
+      const chatId = payload?.chat || activeChatId
+      const messageText = payload?.message || 'The AI could not respond right now. Please try again.'
+      setMessage((prevMessages) => {
+        const withoutTyping = prevMessages.filter(m => !m.typing)
+        return [...withoutTyping, {
+          id: uid(),
+          role: 'assistant',
+          content: messageText,
+          ts: Date.now(),
+          error: true,
+        }]
+      })
+      if (chatId) {
+        dispatch(addMessage({
+          chatId,
+          message: {
+            id: uid(),
+            role: 'assistant',
+            content: messageText,
+            ts: Date.now(),
+            error: true,
+          }
+        }))
+      }
     })
 
     setSocket(newSocket);
@@ -203,10 +237,14 @@ const Home = () => {
         ts: Date.now()
       }];
     });
-    
-    setIsSending(false)
+
     setInput('')
 
+    if (!socket) {
+      setIsSending(false)
+      alert('The AI connection is not ready yet. Please try again in a moment.')
+      return
+    }
 
     socket.emit("ai-message", {
       chat: targetChatId,

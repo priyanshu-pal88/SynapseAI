@@ -19,6 +19,12 @@ const loadInitialState = () => {
 
 const initialState = loadInitialState()
 
+const normalizeChat = (chat) => {
+  if (!chat) return chat
+  const id = chat.id || chat._id || ''
+  return { ...chat, id, _id: chat._id || id }
+}
+
 const chatSlice = createSlice({
   name: 'chat',
   initialState,
@@ -27,15 +33,16 @@ const chatSlice = createSlice({
       state.currentChatId = action.payload
     },
     setChats(state, action) {
-      state.chats = action.payload || []
+      state.chats = (action.payload || []).map(normalizeChat)
       if (!state.currentChatId && state.chats.length) {
-        state.currentChatId = state.chats[0].id
+        state.currentChatId = state.chats[0]?.id || state.chats[0]?._id || ''
       }
     },
     newChat(state, action) {
-      const { id, title , createdAt = Date.now() } = action.payload
-      state.chats = [{ id, title, createdAt, messages: [] }, ...state.chats]
-      state.currentChatId = id
+      const { id, _id, title , createdAt = Date.now() } = action.payload
+      const normalizedChat = normalizeChat({ id: id || _id, _id: _id || id, title, createdAt, messages: [] })
+      state.chats = [normalizedChat, ...state.chats]
+      state.currentChatId = normalizedChat.id
     },
     selectChat(state, action) {
       state.currentChatId = action.payload
@@ -49,21 +56,21 @@ const chatSlice = createSlice({
     },
     addMessage(state, action) {
       const { chatId, message } = action.payload
-      const chat = state.chats.find((c) => c.id === chatId)
+      const chat = state.chats.find((c) => (c.id || c._id) === chatId)
       if (chat) {
         chat.messages = [...(chat.messages || []), message]
       }
     },
     replaceMessage(state, action) {
       const { chatId, messageId, patch } = action.payload
-      const chat = state.chats.find((c) => c.id === chatId)
+      const chat = state.chats.find((c) => (c.id || c._id) === chatId)
       if (chat) {
         chat.messages = (chat.messages || []).map((m) => (m.id === messageId ? { ...m, ...patch } : m))
       }
     },
     updateCurrentChatTitleIfNeeded(state, action) {
       const text = action.payload || ''
-      const chat = state.chats.find((c) => c.id === state.currentChatId)
+      const chat = state.chats.find((c) => (c.id || c._id) === state.currentChatId)
       if (chat && chat.title === 'New chat') {
         const title = text.trim().slice(0, 30) || 'New chat'
         chat.title = title
