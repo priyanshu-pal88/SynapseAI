@@ -4,7 +4,6 @@ import './Messages.css'
 const Messages = ({ message }) => {
   const endRef = useRef(null)
 
-  // Auto-scroll when messages change
   useEffect(() => {
     if (endRef.current) {
       endRef.current.scrollIntoView({ behavior: 'smooth' })
@@ -12,28 +11,25 @@ const Messages = ({ message }) => {
   }, [message])
 
   const hasMessages = message && message.length > 0
-  const messagesClass = `messages ${hasMessages ? 'has-messages' : 'empty'}`
 
   return (
-    <div className={messagesClass} role="log" aria-live="polite">
-      {(!message || message.length === 0) && (
+    <div className={`messages ${hasMessages ? 'has-messages' : ''}`} role="log" aria-live="polite">
+      {!hasMessages && (
         <div className="empty-state">
-          <div className="logo-container">
-            <img 
-              src="/SynapseAI.png" 
-              alt="Synapse AI" 
-              className="synapse-logo"
-            />
-          </div>
-          <h2>Ready to explore ideas with Synapse AI?</h2>
-          <p>Start a conversation and let's create something amazing together.</p>
+          <div className="empty-icon">✦</div>
+          <h2>SynapseAI</h2>
+          <p>Start a conversation to explore ideas together.</p>
         </div>
       )}
 
-      {message && message.map((m, index) => (
-        <div key={m.id || `message-${index}`} className={`message ${m.role || m.type}`}>
-          <div className="avatar" aria-hidden>
-            {(m.role === 'user' || m.type === 'user') ? 'You' : 'Synapse AI'}
+      {hasMessages && message.map((m, index) => (
+        <div key={m.id || `msg-${index}`} className={`message ${m.role || m.type}`}>
+          <div className="avatar">
+            {(m.role === 'user' || m.type === 'user') ? (
+              <i className="ri-user-line"></i>
+            ) : (
+              <i className="ri-sparkling-line"></i>
+            )}
           </div>
           <div className={`bubble ${m.error ? 'error' : ''} ${m.typing ? 'typing-bubble' : ''}`}>
             {m.typing ? (
@@ -43,7 +39,7 @@ const Messages = ({ message }) => {
                 <span className="typing-dot"></span>
               </div>
             ) : (
-              m.content
+              <div className="content">{m.content}</div>
             )}
           </div>
         </div>

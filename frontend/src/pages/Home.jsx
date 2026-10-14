@@ -432,12 +432,7 @@ const Home = () => {
   }
 
   return (
-    <div className={`${containerClass} modern-home`}>
-      {/* ✨ Floating Orbs for Visual Enhancement */}
-      <div className="floating-orb"></div>
-      <div className="floating-orb"></div>
-      <div className="floating-orb"></div>
-
+    <div className={containerClass}>
       <ChatSidebar
         id="chat-sidebar"
         chats={chats}
