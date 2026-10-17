@@ -86,30 +86,32 @@ const Register = () => {
           <div className="error-message">{error}</div>
         )}
 
-        <div className="form-group">
-          <label htmlFor="firstName">First Name</label>
-          <input
-            id="firstName"
-            name="firstName"
-            type="text"
-            value={formData.firstName}
-            onChange={handleChange}
-            placeholder="Enter your first name"
-            required
-          />
-        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="firstName">First Name</label>
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              value={formData.firstName}
+              onChange={handleChange}
+              placeholder="First name"
+              required
+            />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="lastName">Last Name</label>
-          <input
-            id="lastName"
-            name="lastName"
-            type="text"
-            value={formData.lastName}
-            onChange={handleChange}
-            placeholder="Enter your last name"
-            required
-          />
+          <div className="form-group">
+            <label htmlFor="lastName">Last Name</label>
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              value={formData.lastName}
+              onChange={handleChange}
+              placeholder="Last name"
+              required
+            />
+          </div>
         </div>
 
         <div className="form-group">
