@@ -102,7 +102,11 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
       <div className="chat-list">
         {(!chats || chats.length === 0) && (
           <div className="empty-chats">
-            <span>No conversations yet</span>
+            <div className="empty-chats-icon-wrap">
+              <span className="empty-chats-emoji">💬</span>
+            </div>
+            <p className="empty-chats-title">No chats yet</p>
+            <span className="empty-chats-desc">Start a new session to begin</span>
           </div>
         )}
 
