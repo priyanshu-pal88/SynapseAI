@@ -1,62 +1,118 @@
-/* ═══════════════════════════════════════════════
-   Auth Layout — Apple-inspired sign in/up
-   ═══════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   Auth Layout — Luxury Apple / Linear Authentication Pages
+   ════════════════════════════════════════════════════════════════ */
 
 .auth-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
-  color: var(--text);
+  background-color: var(--bg-core);
+  background-image: 
+    radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 45%);
+  color: var(--text-primary);
   padding: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
 .auth-form {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--bg-glass-thick);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-xl);
-  padding: 44px 36px;
+  padding: 44px 38px;
   width: 100%;
-  max-width: 400px;
-  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  animation: authFormIn 0.6s var(--ease-out);
+  max-width: 420px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), var(--bevel-light);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  animation: authCardEnter 0.6s var(--ease-spring);
+  position: relative;
+  z-index: 10;
 }
 
-@keyframes authFormIn {
+@keyframes authCardEnter {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.98);
-    filter: blur(4px);
-  }
-  60% {
-    filter: blur(0);
+    transform: translateY(20px) scale(0.96);
   }
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0);
   }
 }
 
-.auth-form h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text);
-  text-align: center;
-  margin: 0 0 32px;
-  letter-spacing: -0.03em;
+/* ── Auth Logo & Aura ── */
+.auth-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
 }
 
+.auth-logo-aura {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.5) 0%, rgba(139, 92, 246, 0.25) 50%, transparent 70%);
+  filter: blur(12px);
+  animation: authAura 4s infinite ease-in-out;
+}
+
+@keyframes authAura {
+  0%, 100% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 0.95; }
+}
+
+.auth-logo-frame {
+  position: relative;
+  z-index: 2;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md, 14px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), var(--bevel-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.auth-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+.auth-form h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  margin: 0 0 28px;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Form Controls ── */
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
   display: block;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-tertiary);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -64,88 +120,87 @@
 
 .form-group input {
   width: 100%;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface-elevated);
-  color: var(--text);
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
   font-size: 14px;
-  font-family: var(--font-sans);
+  font-family: inherit;
   outline: none;
   box-sizing: border-box;
   letter-spacing: -0.01em;
-  transition:
-    border-color var(--duration) var(--ease-out),
-    box-shadow var(--duration-slow) var(--ease-out);
+  transition: all var(--duration-fast);
 }
 
 .form-group input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
+  border-color: var(--accent-light);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 3px var(--accent-subtle), 0 2px 10px rgba(99, 102, 241, 0.15);
 }
 
 .form-group input::placeholder {
-  color: var(--text-quaternary);
+  color: var(--text-faint);
 }
 
 .auth-btn {
   width: 100%;
-  padding: 13px;
-  border-radius: var(--radius);
+  padding: 12px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: var(--accent);
+  background: var(--accent-gradient);
   color: #fff;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
-  font-family: var(--font-sans);
+  font-family: inherit;
   cursor: pointer;
-  margin-top: 24px;
+  margin-top: 22px;
   letter-spacing: -0.01em;
-  transition:
-    background var(--duration) var(--ease-out),
-    transform var(--duration-fast) var(--ease-spring),
-    box-shadow var(--duration) var(--ease-out);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  transition: all var(--duration-fast) var(--ease-spring);
 }
 
-.auth-btn:hover {
-  background: var(--accent-hover);
-  box-shadow: 0 4px 16px var(--accent-glow);
+.auth-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.6);
 }
 
-.auth-btn:active {
-  transform: scale(0.97);
+.auth-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .auth-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .auth-link {
   text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-  color: var(--text-tertiary);
+  margin-top: 22px;
+  font-size: 13.5px;
+  color: var(--text-muted);
 }
 
 .auth-link a {
-  color: var(--accent);
+  color: var(--accent-light);
   text-decoration: none;
   font-weight: 500;
-  transition: color var(--duration) var(--ease-out);
+  transition: color var(--duration-fast);
 }
 
 .auth-link a:hover {
-  color: var(--accent-hover);
+  color: #fff;
+  text-decoration: underline;
 }
 
 .error-message {
-  color: var(--danger);
+  color: #fff;
   background: var(--danger-subtle);
-  border: 1px solid rgba(239, 68, 68, 0.15);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  margin-bottom: 20px;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 18px;
   font-size: 13px;
   font-weight: 500;
   animation: errorShake 0.4s var(--ease-spring);
@@ -153,31 +208,31 @@
 
 @keyframes errorShake {
   0%, 100% { transform: translateX(0); }
-  20%      { transform: translateX(-4px); }
-  40%      { transform: translateX(4px); }
-  60%      { transform: translateX(-2px); }
-  80%      { transform: translateX(2px); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
 }
 
-/* Loading states (shared by auth pages) */
+/* Loading overlay */
 .auth-loading {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--bg-core);
+  color: var(--text-primary);
   gap: 16px;
 }
 
 .loading-spinner {
-  width: 28px;
-  height: 28px;
-  border: 2.5px solid var(--border-hover);
-  border-top: 2.5px solid var(--accent);
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid var(--border-light);
+  border-top: 2.5px solid var(--accent-light);
   border-radius: 50%;
-  animation: spin 0.75s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -186,13 +241,12 @@
 
 .auth-loading p {
   font-size: 14px;
-  color: var(--text-tertiary);
+  color: var(--text-muted);
   margin: 0;
 }
 
 @media (max-width: 480px) {
   .auth-form {
-    padding: 36px 24px;
-    border-radius: var(--radius-lg);
+    padding: 34px 22px;
   }
 }

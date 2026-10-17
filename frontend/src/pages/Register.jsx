@@ -81,6 +81,16 @@ const Register = () => {
   return (
     <div className="auth-container">
       <form onSubmit={handleSubmit} className="auth-form">
+        <div className="auth-logo-container">
+          <div className="auth-logo-aura"></div>
+          <div className="auth-logo-frame">
+            <img 
+              src="/SynapseAI.png" 
+              alt="Synapse AI" 
+              className="auth-logo"
+            />
+          </div>
+        </div>
         <h2>Create your account</h2>
 
         {error && (

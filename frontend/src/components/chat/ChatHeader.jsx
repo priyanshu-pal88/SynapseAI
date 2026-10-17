@@ -11,19 +11,46 @@ const ChatHeader = ({ sidebarOpen, onToggleSidebar, onLogout }) => {
         aria-controls="sidebar"
         aria-expanded={sidebarOpen}
       >
-        <i className="ri-menu-line"></i>
+        <i className="ri-menu-2-line"></i>
       </button>
 
-      <h1 className="header-title">
-        <span className="title-icon">✦</span>
-        SynapseAI
-      </h1>
+      {/* SynapseAI Brand Identity with Glowing Logo */}
+      <div className="header-brand-container">
+        <div className="header-logo-frame">
+          <img 
+            src="/SynapseAI.png" 
+            alt="SynapseAI" 
+            className="header-logo-image" 
+          />
+          <div className="header-logo-glow"></div>
+        </div>
+        <div className="header-brand-details">
+          <span className="header-brand-title">SynapseAI</span>
+          <span className="header-version-pill">
+            <span className="pulse-indicator-dot"></span>
+            Neural Core
+          </span>
+        </div>
+      </div>
 
       <div className="header-spacer" />
 
-      <button className="icon-btn logout-trigger" onClick={onLogout} title="Sign out">
-        <i className="ri-logout-box-r-line"></i>
-      </button>
+      {/* Header Actions */}
+      <div className="header-actions">
+        <div className="header-status-badge">
+          <span className="status-dot"></span>
+          <span className="status-label">Online</span>
+        </div>
+
+        <button 
+          className="header-logout-btn" 
+          onClick={onLogout} 
+          title="Sign out of SynapseAI"
+        >
+          <i className="ri-logout-box-r-line"></i>
+          <span className="logout-text">Sign Out</span>
+        </button>
+      </div>
     </header>
   )
 }
