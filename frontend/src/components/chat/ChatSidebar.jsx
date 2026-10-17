@@ -72,9 +72,9 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
 
   return (
     <aside id={id} className={`chat-sidebar ${open ? 'open' : 'closed'}`} ref={sidebarRef}>
-      {/* Sidebar Top: Logo & New Session Button */}
+      {/* Sidebar Top: Logo + New Session Button */}
       <div className="sidebar-top">
-        <div className="sidebar-header-brand">
+        <div className="sidebar-header">
           <div className="sidebar-logo-container">
             <img 
               src="/SynapseAI.png" 
@@ -83,13 +83,6 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
             />
             <div className="sidebar-logo-glow"></div>
           </div>
-          <div className="sidebar-brand-text">
-            <span className="sidebar-brand-title">Synapse AI</span>
-            <span className="sidebar-brand-sub">Workspace</span>
-          </div>
-        </div>
-
-        <div className="sidebar-actions-row">
           <button className="new-session-btn" onClick={onNewChat} title="Start a new session">
             <i className="ri-add-line"></i>
             <span>New Session</span>
@@ -100,89 +93,77 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
             aria-label="Close sidebar"
             title="Close sidebar"
           >
-            <i className="ri-close-line"></i>
+            <i className="ri-arrow-left-s-line"></i>
           </button>
         </div>
       </div>
 
       {/* Chat History List */}
-      <div className="chat-list-section">
-        <div className="chat-list-heading">
-          <span>Recent Sessions</span>
-          <span className="chat-count-badge">{chats?.length || 0}</span>
-        </div>
+      <div className="chat-list">
+        {(!chats || chats.length === 0) && (
+          <div className="empty-chats">
+            <span>No conversations yet</span>
+          </div>
+        )}
 
-        <div className="chat-list">
-          {(!chats || chats.length === 0) && (
-            <div className="empty-chats">
-              <i className="ri-chat-smile-2-line empty-icon"></i>
-              <p>No conversations yet</p>
-              <span>Click "New Session" to start</span>
-            </div>
-          )}
+        {chats && chats.map((c, index) => {
+          const chatId = c._id || c.id;
+          const isEditing = editingId === chatId;
+          const isMenuOpen = openMenuId === chatId;
 
-          {chats && chats.map((c, index) => {
-            const chatId = c._id || c.id;
-            const isEditing = editingId === chatId;
-            const isMenuOpen = openMenuId === chatId;
+          return (
+            <div
+              key={chatId || `chat-${index}`}
+              className={`chat-item ${chatId === activeChatId ? 'active' : ''} ${isMenuOpen ? 'menu-open' : ''}`}
+              onClick={() => !isEditing && onSelectChat(chatId)}
+            >
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  onKeyDown={(e) => handleRenameSubmit(e, chatId)}
+                  onBlur={(e) => handleRenameSubmit(e, chatId)}
+                  className="rename-input"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span className="chat-title" title={c.title}>{c.title}</span>
+              )}
 
-            return (
-              <div
-                key={chatId || `chat-${index}`}
-                className={`chat-item ${chatId === activeChatId ? 'active' : ''} ${isMenuOpen ? 'menu-open' : ''}`}
-                onClick={() => !isEditing && onSelectChat(chatId)}
-              >
-                <div className="chat-item-indicator"></div>
-                <i className="ri-message-3-line chat-icon"></i>
-                
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onKeyDown={(e) => handleRenameSubmit(e, chatId)}
-                    onBlur={(e) => handleRenameSubmit(e, chatId)}
-                    className="rename-input"
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span className="chat-title" title={c.title}>{c.title}</span>
+              <div className="chat-actions">
+                <button
+                  className="action-btn"
+                  onClick={(e) => handleMenuToggle(e, chatId)}
+                  title="Session options"
+                  aria-label={`Options for ${c.title}`}
+                >
+                  <i className="ri-more-2-fill"></i>
+                </button>
+
+                {isMenuOpen && (
+                  <div className="dropdown-menu">
+                    <button
+                      className="dropdown-item"
+                      onClick={(e) => handleRenameClick(e, chatId, c.title)}
+                    >
+                      <i className="ri-edit-line"></i>
+                      <span>Rename</span>
+                    </button>
+                    <button
+                      className="dropdown-item delete"
+                      onClick={(e) => handleDeleteClick(e, chatId)}
+                    >
+                      <i className="ri-delete-bin-line"></i>
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 )}
-
-                <div className="chat-actions">
-                  <button
-                    className="action-btn"
-                    onClick={(e) => handleMenuToggle(e, chatId)}
-                    title="Session options"
-                    aria-label={`Options for ${c.title}`}
-                  >
-                    <i className="ri-more-2-fill"></i>
-                  </button>
-
-                  {isMenuOpen && (
-                    <div className="dropdown-menu">
-                      <button
-                        className="dropdown-item"
-                        onClick={(e) => handleRenameClick(e, chatId, c.title)}
-                      >
-                        <i className="ri-edit-line"></i>
-                        <span>Rename</span>
-                      </button>
-                      <button
-                        className="dropdown-item delete"
-                        onClick={(e) => handleDeleteClick(e, chatId)}
-                      >
-                        <i className="ri-delete-bin-line"></i>
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Delete Confirmation Modal */}
@@ -212,13 +193,11 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
         </div>
       )}
 
-      {/* Sidebar Footer — Restored and Elevated */}
+      {/* Sidebar Footer — Exactly as in user screenshot */}
       <div className="sidebar-footer">
         <div className="footer-content">
           <div className="footer-branding">
-            <div className="footer-logo-wrap">
-              <img src="/SynapseAI.png" alt="Synapse AI" className="footer-logo" />
-            </div>
+            <img src="/SynapseAI.png" alt="Synapse AI" className="footer-logo" />
             <div className="footer-text">
               <h4>Synapse AI</h4>
               <p>Intelligent conversations, limitless possibilities</p>
@@ -229,7 +208,7 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
               <i className="ri-chat-3-line"></i>
               <span>{chats?.length || 0} conversations</span>
             </div>
-            <div className="stat-item ai-badge">
+            <div className="stat-item">
               <i className="ri-sparkling-fill"></i>
               <span>Powered by AI</span>
             </div>

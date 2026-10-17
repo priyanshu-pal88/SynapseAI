@@ -15,7 +15,7 @@ const Login = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const navigate = useNavigate()
 
-  // KEEP useEffect for auth check EXACTLY AS-IS
+  // Check authentication in background without blocking switching between login/register
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
@@ -24,22 +24,11 @@ const Login = () => {
           navigate('/')
         }
       } catch (error) {
-        console.log('User not authenticated')
-      } finally {
-        setIsCheckingAuth(false)
+        // User not authenticated, stay on login
       }
     }
     checkAuthentication()
   }, [navigate])
-
-  if (isCheckingAuth) {
-    return (
-      <div className="auth-loading">
-        <div className="loading-spinner"></div>
-        <p>Checking authentication...</p>
-      </div>
-    )
-  }
 
   // KEEP handleChange and handleSubmit EXACTLY AS-IS
   const handleChange = (e) => {

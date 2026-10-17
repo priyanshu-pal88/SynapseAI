@@ -17,7 +17,7 @@ const Register = () => {
   const [error, setError] = useState('')
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
-  // KEEP useEffect for auth check EXACTLY AS-IS
+  // Check authentication in background without blocking switching between login/register
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
@@ -26,22 +26,11 @@ const Register = () => {
           navigate('/')
         }
       } catch (error) {
-        console.log('User not authenticated')
-      } finally {
-        setIsCheckingAuth(false)
+        // User not authenticated, stay on register
       }
     }
     checkAuthentication()
   }, [navigate])
-
-  if (isCheckingAuth) {
-    return (
-      <div className="auth-loading">
-        <div className="loading-spinner"></div>
-        <p>Checking authentication...</p>
-      </div>
-    )
-  }
 
   // KEEP handleChange and handleSubmit EXACTLY AS-IS
   const handleChange = (e) => {
