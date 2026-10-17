@@ -202,83 +202,101 @@ const Home = () => {
     const text = input.trim()
     if (!text || isSending) return
 
-
-    let targetChatId = activeChatId
-    if (!targetChatId) {
-      targetChatId = await handleNewChat({ programmatic: true })
-      if (!targetChatId) return
-    }
-
+    // 1. Optimistic Instant UI Feedback (0ms delay)
+    setInput('')
     setIsSending(true)
 
     const userMsg = { id: uid(), role: 'user', content: text, ts: Date.now() }
 
-    dispatch(addMessage({ chatId: targetChatId, message: userMsg }))
-    dispatch(updateCurrentChatTitleIfNeeded(text))
-
-
-    const currentChat = chats.find(c => (c.id || c._id) === targetChatId)
-    if (currentChat && currentChat.title === 'New chat' && (!currentChat.messages || currentChat.messages.length === 0)) {
-      const newTitle = text.trim().slice(0, 30)
-      try {
-        await axios.patch(`/api/chat/${targetChatId}`, { title: newTitle }, { withCredentials: true })
-      } catch (err) {
-        console.warn('Failed to update chat title on server:', err?.response?.data || err?.message)
-      }
-    }
-
-    // Clear any existing typing indicators and add user message
+    // Instantly transition from empty state to conversation view with typing indicator
     setMessage((prevMessages) => {
       const withoutTyping = prevMessages.filter(m => !m.typing);
-      return [...withoutTyping, {
-        id: uid(),
-        role: 'user',
-        content: text,
-        ts: Date.now()
-      }];
+      return [
+        ...withoutTyping,
+        userMsg,
+        {
+          id: 'typing-indicator',
+          role: 'assistant',
+          content: '',
+          typing: true,
+          ts: Date.now()
+        }
+      ];
     });
 
-    setInput('')
+    try {
+      let targetChatId = activeChatId
 
-    if (!socket) {
+      // 2. If new conversation, create the session on the backend
+      if (!targetChatId) {
+        targetChatId = await handleNewChat({ programmatic: true, draftText: text })
+        if (!targetChatId) {
+          setIsSending(false)
+          setMessage((prev) => prev.filter(m => !m.typing))
+          return
+        }
+      }
+
+      dispatch(addMessage({ chatId: targetChatId, message: userMsg }))
+      dispatch(updateCurrentChatTitleIfNeeded(text))
+
+      // Update title on server asynchronously in background without blocking socket
+      const currentChat = chats.find(c => (c.id || c._id) === targetChatId)
+      if (currentChat && currentChat.title === 'New chat' && (!currentChat.messages || currentChat.messages.length === 0)) {
+        const newTitle = text.slice(0, 30)
+        axios.patch(`${API_BASE_URL}/api/chat/${targetChatId}`, { title: newTitle }, { withCredentials: true })
+          .catch(err => console.warn('Failed to update chat title:', err?.message))
+      }
+
+      if (!socket) {
+        setIsSending(false)
+        setMessage((prev) => prev.filter(m => !m.typing))
+        alert('The AI connection is not ready yet. Please try again in a moment.')
+        return
+      }
+
+      // 3. Emit message to AI over socket
+      socket.emit("ai-message", {
+        chat: targetChatId,
+        content: text
+      });
+
+    } catch (error) {
+      console.error('Error in handleSend:', error)
       setIsSending(false)
-      alert('The AI connection is not ready yet. Please try again in a moment.')
-      return
+      setMessage((prev) => prev.filter(m => !m.typing))
     }
-
-    socket.emit("ai-message", {
-      chat: targetChatId,
-      content: text
-    });
-
   }
 
   async function handleNewChat(options = {}) {
-    const skipConfirm = options === true || options.programmatic || options.skipConfirm
+    const isProgrammatic = options === true || options.programmatic || options.skipConfirm
     const hasCurrent = messages && messages.length > 0
     const hasDraft = input.trim().length > 0
-    if (!skipConfirm && (hasCurrent || hasDraft)) {
+    if (!isProgrammatic && (hasCurrent || hasDraft)) {
       const proceed = window.confirm('Start a new chat? The current chat will remain saved.')
       if (!proceed) return
     }
 
     let serverId = ''
     let serverTitle = ''
-    const titles = hasDraft ? input.trim().slice(0, 30) : 'New chat'
+    const titles = options.draftText ? options.draftText.slice(0, 30) : (hasDraft ? input.trim().slice(0, 30) : 'New chat')
 
     try {
       const res = await axios.post(`${API_BASE_URL}/api/chat`, { title: titles }, { withCredentials: true })
- 
       serverId = res?.data?.chat?._id || res?.data?._id || ''
       serverTitle = res?.data?.chat?.title || res?.data?.title || ''
     } catch (err) {
       console.warn('Create chat on server failed, using local id:', err?.response?.data || err?.message || err)
     }
+
     const id = serverId || uid()
     const title = serverTitle || 'New chat'
     dispatch(newChatAction({ id, title, createdAt: Date.now() }))
-    setInput('')
-    getMessages(id)
+
+    if (!isProgrammatic) {
+      setInput('')
+      setMessage([])
+    }
 
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 960px)').matches) {
       setSidebarOpen(false)
