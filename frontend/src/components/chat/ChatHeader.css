@@ -1,244 +1,69 @@
+/* ═══════════════════════════════════════════════
+   Chat Header — Apple-inspired minimal bar
+   ═══════════════════════════════════════════════ */
+
 .chat-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-shadow);
-  height: 60px;
-  overflow: visible;
-}
-
-.spacer { flex: 1; }
-
-/* Logo Styles */
-.logo-container {
-  display: flex;
-  align-items: center;
   gap: 12px;
-  position: relative;
-  transform: translateY(3px);
-}
-
-.logo-wrapper {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  cursor: pointer;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--vibrancy);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.header-title {
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.logo-wrapper:hover {
-  transform: none;
-}
-
-.logo-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
-  transition: filter 0.3s ease;
-  background: transparent;
-
-}
-
-.logo-wrapper:hover .logo-image {
-  filter: brightness(1.1) saturate(1.2);
-}
-
-.logo-glow {
-  position: absolute;
-  inset: 0;
-  background: conic-gradient(
-    from 0deg,
-    transparent,
-    #6366f1,
-    #8b5cf6,
-    #f472b6,
-    #06d6a0,
-    transparent
-  );
-  border-radius: 8px;
-  opacity: 0;
-  z-index: -1;
-  filter: blur(4px);
-}
-
-.logo-wrapper:hover .logo-glow {
-  opacity: 0.6;
-  animation: logoGlowHover 2s ease-in-out infinite;
-}
-
-.logo-text {
-  font-size: 22px;
-  font-weight: 700;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text);
-  letter-spacing: 0.5px;
-  opacity: 0.9;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6, #f472b6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: textShimmer 3s ease-in-out infinite;
+  margin: 0;
+  letter-spacing: -0.02em;
+  user-select: none;
 }
 
-.logo-container:hover .logo-text {
-  opacity: 1;
-  transform: none;
+.title-icon {
+  font-size: 14px;
+  color: var(--accent);
+  display: inline-flex;
+  transition: transform var(--duration-slow) var(--ease-spring);
 }
 
-/* Animations */
-@keyframes logoFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(3px);
-  }
+.header-title:hover .title-icon {
+  transform: rotate(72deg) scale(1.15);
 }
 
-@keyframes logoFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-1px);
-  }
+.header-spacer {
+  flex: 1;
 }
 
-@keyframes logoGlow {
-  0%, 100% {
-    opacity: 0;
-    transform: rotate(0deg);
-  }
-  50% {
-    opacity: 0.3;
-    transform: rotate(180deg);
-  }
+/* Hide toggle on desktop */
+.menu-toggle {
+  display: none;
 }
 
-@keyframes logoGlowHover {
-  0%, 100% {
-    opacity: 0.4;
-    transform: rotate(0deg);
-  }
-  50% {
-    opacity: 0.6;
-    transform: rotate(180deg);
-  }
-}
-
-@keyframes textShimmer {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-/* Responsive logo - Show only logo on larger screens, only text on smaller screens */
-@media (min-width: 769px) {
-  .logo-text {
-    display: none;
-  }
-  
-  .logo-wrapper {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-@media (max-width: 768px) {
-  .logo-wrapper {
-    display: none;
-  }
-  
-  .logo-container {
-    gap: 0;
-  }
-  
-  .logo-text {
-    font-size: 24px;
-    font-weight: 800;
-  }
-}
-
-.icon-btn {
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  color: var(--text);
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease;
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-shadow);
-}
-
-.icon-btn:hover { filter: brightness(1.06); }
-
-/* Completely hide burger on desktop, only show on mobile */
-.icon-btn.menu { display: none; }
 @media (max-width: 960px) {
-  .icon-btn.menu { display: inline-flex; align-items: center; justify-content: center; }
-}
-
-/* Logout button styling */
-.logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-shadow);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.logout-btn:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-  box-shadow: var(--glass-shadow), 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.logout-btn:active {
-  transform: translateY(0);
-}
-
-.logout-icon {
-  font-size: 16px;
-  opacity: 0.8;
-}
-
-.logout-text {
-  font-size: 14px;
-}
-
-/* Hide logout text on smaller screens */
-@media (max-width: 480px) {
-  .logout-text {
-    display: none;
+  .menu-toggle {
+    display: inline-flex;
   }
-  .logout-btn {
-    padding: 8px 12px;
-  }
+}
+
+/* Logout icon — subtle danger on hover */
+.logout-trigger {
+  color: var(--text-tertiary);
+  border-color: transparent;
+  background: transparent;
+}
+
+.logout-trigger:hover {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border-color: transparent;
 }

@@ -1,180 +1,210 @@
+/* ═══════════════════════════════════════════════
+   Messages — Apple-inspired conversation view
+   ═══════════════════════════════════════════════ */
+
 .messages {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px;
-  padding-bottom: 120px; /* space for sticky input bar */
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 768px;
-  margin: 0 auto;
+  gap: 2px;
   width: 100%;
   min-height: 0;
-  position: relative;
+  padding-bottom: 8px;
 }
 
-/* Custom thin scrollbar styling positioned further right */
-.messages::-webkit-scrollbar {
-  width: 8px;
+.messages.has-messages {
+  padding: 20px 24px;
 }
 
-.messages::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 4px;
-  margin-right: -4px; /* Push track further right */
-}
-
-.messages::-webkit-scrollbar-thumb {
-  background: var(--glass-border);
-  border-radius: 4px;
-  border-right: 2px solid transparent; /* Add space on the right */
-  background-clip: padding-box;
-  transition: background-color 0.2s ease;
-}
-
-.messages::-webkit-scrollbar-thumb:hover {
-  background: var(--text);
-  opacity: 0.8;
-}
-
-/* Firefox scrollbar styling */
-.messages {
-  scrollbar-width: thin;
-  scrollbar-color: var(--glass-border) transparent;
-}
+/* ── Message row ── */
 
 .message {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: flex-start;
-  /* shrink message row to its content so we can left/right align the whole row */
-  width: fit-content;
-  max-width: 95%;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 14px 0;
+  animation: messageEnter var(--duration-enter) var(--ease-out);
 }
 
-.message .avatar { 
+@keyframes messageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+  60% {
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* ── Avatar ── */
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  min-width: 64px;
-  margin-top: 2px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  transition:
+    background var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-spring);
 }
 
-.bubble {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  padding: 0;
-  line-height: 1.6;
-  color: var(--text);
-  font-size: 15px;
-  /* shrink to content so left/right alignment is visible */
-  display: inline-block;
-  width: fit-content;
-  /* cap bubble width to a readable measure while staying responsive */
-  max-width: min(100ch, 95vw);
-  /* wrap long words/URLs gracefully */
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  border-radius: 14px;
-  padding: 10px 14px;
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-shadow);
-}
-
-.bubble.error { 
-  color: var(--danger);
-}
-
-.message.user {
-  align-self: flex-start;
-}
-
-.message.user .bubble {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+.avatar:hover {
+  transform: scale(1.1);
 }
 
 .message.user .avatar {
-  order: -1;
+  background: var(--accent-subtle);
+  color: var(--accent);
 }
 
-/* Align AI/assistant messages to the right side */
-.message.assistant,
-.message.ai {
-  align-self: flex-end;
-  flex-direction: row-reverse;
+.message.assistant .avatar,
+.message.ai .avatar {
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+}
+
+/* ── Bubble ── */
+
+.bubble {
+  flex: 1;
+  line-height: 1.7;
+  color: var(--text);
+  font-size: 14.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  letter-spacing: -0.01em;
+}
+
+.message.user .bubble {
+  background: var(--accent-subtle);
+  border: 1px solid rgba(99, 102, 241, 0.06);
 }
 
 .message.assistant .bubble,
 .message.ai .bubble {
-  background: var(--glass-bg);
-  color: white;
-  /* border: 1px solid var(--primary); */
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
-/* Typing animation styles */
+.bubble.error {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border-color: rgba(239, 68, 68, 0.1);
+}
+
+/* ── Typing animation — Apple Messages style ── */
+
 .typing-bubble {
   min-height: 20px;
   display: flex;
   align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .typing-animation {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 0;
+  gap: 5px;
+  padding: 2px 0;
 }
 
 .typing-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background-color: var(--text);
-  opacity: 0.4;
-  animation: typing-bounce 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) {
-  animation-delay: 0s;
+  background: var(--text-tertiary);
+  animation: typingPulse 1.5s ease-in-out infinite;
 }
 
 .typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.15s;
 }
 
 .typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: 0.3s;
 }
 
-@keyframes typing-bounce {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.4;
+@keyframes typingPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.85);
   }
-  30% {
-    transform: translateY(-10px);
+  50% {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
-/* Legacy typing styles for fallback */
-.typing { 
-  opacity: 0.7; 
-  font-style: italic; 
-  margin-left: 6px; 
-}
+/* ── Empty state ── */
 
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  flex: 1;
   text-align: center;
-  margin-top: 20vh;
-  color: var(--text);
+  padding: 40px;
+  animation: emptyFadeIn 0.8s var(--ease-out);
+}
+
+@keyframes emptyFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.empty-icon {
+  font-size: 44px;
+  margin-bottom: 20px;
+  color: var(--accent);
+  opacity: 0.5;
+  animation: emptyIconFloat 4s ease-in-out infinite;
+}
+
+@keyframes emptyIconFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
 }
 
 .empty-state h2 {
-  font-size: 28px;
-  font-weight: 400;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 8px;
+  letter-spacing: -0.03em;
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: var(--text-tertiary);
   margin: 0;
+  max-width: 340px;
+  line-height: 1.5;
 }

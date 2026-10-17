@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import './ChatSidebar.css'
 
 const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, open, onClose }) => {
+  // KEEP ALL EXISTING STATE AND HANDLERS EXACTLY AS-IS
   const [openMenuId, setOpenMenuId] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [editTitle, setEditTitle] = useState('')
@@ -9,20 +10,20 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
   const [chatToDelete, setChatToDelete] = useState(null)
   const sidebarRef = useRef(null)
 
-  // Close dropdown when clicking outside
+  // KEEP the useEffect for click outside EXACTLY AS-IS
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         setOpenMenuId(null)
       }
     }
-
     if (openMenuId) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [openMenuId])
 
+  // KEEP ALL HANDLERS EXACTLY AS-IS
   const handleDeleteClick = (e, chatId) => {
     e.stopPropagation()
     const chat = chats.find(c => (c._id || c.id) === chatId)
@@ -74,43 +75,33 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
   return (
     <aside id={id} className={`chat-sidebar ${open ? 'open' : 'closed'}`} ref={sidebarRef}>
       <div className="sidebar-top">
-        <div className="sidebar-header">
-          <div className="sidebar-logo-container">
-            <img 
-              src="/SynapseAI.png" 
-              alt="Synapse AI" 
-              className="sidebar-logo"
-            />
-          </div>
-          <div className="sidebar-actions">
-            <button className="btn small" onClick={onNewChat} title="Start a new session">
-              <i className="ri-add-line"></i>
-              New Session
-            </button>
-            <button
-              className="btn small close-btn"
-              onClick={onClose}
-              aria-label="Close sidebar"
-              title="Close sidebar"
-            >
-              <i className="ri-close-line"></i>
-            </button>
-          </div>
-        </div>
+        <button className="btn new-chat-btn" onClick={onNewChat}>
+          <i className="ri-add-line"></i>
+          New Chat
+        </button>
+        <button
+          className="icon-btn close-sidebar-btn"
+          onClick={onClose}
+          aria-label="Close sidebar"
+        >
+          <i className="ri-close-line"></i>
+        </button>
       </div>
+
       <div className="chat-list">
-        {(!chats || chats.length === 0) && <div className="empty">No chats yet</div>}
+        {(!chats || chats.length === 0) && <div className="empty-chats">No conversations yet</div>}
         {chats && chats.map((c, index) => {
           const chatId = c._id || c.id;
           const isEditing = editingId === chatId;
           const isMenuOpen = openMenuId === chatId;
-          
+
           return (
             <div
               key={chatId || `chat-${index}`}
-              className={`chat-list-item ${chatId === activeChatId ? 'active' : ''} ${isMenuOpen ? 'menu-open' : ''}`}
+              className={`chat-item ${chatId === activeChatId ? 'active' : ''} ${isMenuOpen ? 'menu-open' : ''}`}
               onClick={() => !isEditing && onSelectChat(chatId)}
             >
+              <i className="ri-message-3-line chat-icon"></i>
               {isEditing ? (
                 <input
                   type="text"
@@ -123,19 +114,19 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <span className="title" title={c.title}>{c.title}</span>
+                <span className="chat-title" title={c.title}>{c.title}</span>
               )}
-              
+
               <div className="chat-actions">
                 <button
-                  className="menu-btn"
+                  className="action-btn"
                   onClick={(e) => handleMenuToggle(e, chatId)}
-                  title="Chat options"
+                  title="Options"
                   aria-label={`Options for ${c.title}`}
                 >
-                  <i className="ri-more-2-line"></i>
+                  <i className="ri-more-2-fill"></i>
                 </button>
-                
+
                 {isMenuOpen && (
                   <div className="dropdown-menu">
                     <button
@@ -160,7 +151,7 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
         })}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal — KEEP EXACTLY */}
       {deleteConfirmId && (
         <div className="delete-modal-overlay">
           <div className="delete-modal">
@@ -173,47 +164,16 @@ const ChatSidebar = ({ id = 'sidebar', chats, activeChatId, onSelectChat, onNewC
               <p className="warning-text">This action cannot be undone.</p>
             </div>
             <div className="delete-modal-actions">
-              <button 
-                className="btn-cancel" 
-                onClick={handleCancelDelete}
-              >
-                <i className="ri-close-line"></i>
+              <button className="btn-cancel" onClick={handleCancelDelete}>
                 Cancel
               </button>
-              <button 
-                className="btn-delete" 
-                onClick={handleConfirmDelete}
-              >
-                <i className="ri-delete-bin-line"></i>
+              <button className="btn-delete" onClick={handleConfirmDelete}>
                 Delete
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Sidebar Footer */}
-      <div className="sidebar-footer">
-        <div className="footer-content">
-          <div className="footer-branding">
-            <img src="/SynapseAI.png" alt="Synapse AI" className="footer-logo" />
-            <div className="footer-text">
-              <h4>Synapse AI</h4>
-              <p>Intelligent conversations, limitless possibilities</p>
-            </div>
-          </div>
-          <div className="footer-stats">
-            <div className="stat-item">
-              <i className="ri-chat-3-line"></i>
-              <span>{chats?.length || 0} conversations</span>
-            </div>
-            <div className="stat-item">
-              <i className="ri-sparkling-line"></i>
-              <span>Powered by AI</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </aside>
   )
 }

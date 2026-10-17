@@ -17,27 +17,23 @@ const Register = () => {
   const [error, setError] = useState('')
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
 
+  // KEEP useEffect for auth check EXACTLY AS-IS
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
-        
         if (response.data.success) {
-          // User is already logged in, redirect to home
           navigate('/')
         }
       } catch (error) {
-        // User is not authenticated, stay on register page
         console.log('User not authenticated')
       } finally {
         setIsCheckingAuth(false)
       }
     }
-
     checkAuthentication()
   }, [navigate])
 
-  // Show loading screen while checking authentication
   if (isCheckingAuth) {
     return (
       <div className="auth-loading">
@@ -47,6 +43,7 @@ const Register = () => {
     )
   }
 
+  // KEEP handleChange and handleSubmit EXACTLY AS-IS
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -56,7 +53,6 @@ const Register = () => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-    
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
         fullName: {
@@ -68,33 +64,15 @@ const Register = () => {
       }, {
         withCredentials: true
       })
-      
-      // Registration successful
       console.log('Registration successful:', response.data)
-      
-      // Clear form and navigate to login
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: ''
-      })
-      
-      // Navigate to login with success message
-      navigate('/login', { 
+      setFormData({ firstName: '', lastName: '', email: '', password: '' })
+      navigate('/login', {
         state: { message: 'Account created successfully! Please login.' }
       })
-      
     } catch (error) {
-      // Registration failed
       console.error('Registration failed:', error.response?.data || error.message)
-      
-      // Set error message
       const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.'
       setError(errorMessage)
-      
-      // Don't clear the form on error, keep user input
-      // Don't navigate on error, stay on register page
     } finally {
       setIsLoading(false)
     }
@@ -103,23 +81,12 @@ const Register = () => {
   return (
     <div className="auth-container">
       <form onSubmit={handleSubmit} className="auth-form">
-
         <h2>Create your account</h2>
-        
+
         {error && (
-          <div className="error-message" style={{
-            color: '#dc2626',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '6px',
-            padding: '12px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}>
-            {error}
-          </div>
+          <div className="error-message">{error}</div>
         )}
-        
+
         <div className="form-group">
           <label htmlFor="firstName">First Name</label>
           <input
@@ -175,7 +142,7 @@ const Register = () => {
         <button type="submit" className="auth-btn" disabled={isLoading}>
           {isLoading ? 'Creating account...' : 'Create account'}
         </button>
-        
+
         <div className="auth-link">
           Already have an account? <Link to="/login">Sign in</Link>
         </div>

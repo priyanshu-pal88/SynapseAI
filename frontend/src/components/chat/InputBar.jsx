@@ -10,23 +10,25 @@ const InputBar = ({ value, onChange, onSend, disabled }) => {
   }
 
   return (
-    <div className="input-bar-container">
-      <div className="input-bar">
+    <div className="input-container">
+      <div className="input-wrapper">
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask anything"
+          placeholder="Message SynapseAI..."
           rows={1}
-          title="Press Enter to send, Shift+Enter for new line"
         />
-        <button className="btn primary" onClick={onSend} disabled={disabled || !value.trim()}>
-          Send
+        <button
+          className="send-btn"
+          onClick={onSend}
+          disabled={disabled || !value.trim()}
+          title="Send message"
+        >
+          <i className="ri-arrow-up-line"></i>
         </button>
       </div>
-      <div className="input-helper">
-        Synapse can make mistakes. Check important info. Press Enter to send, Shift+Enter for new line.
-      </div>
+      <p className="input-disclaimer">SynapseAI can make mistakes. Check important info.</p>
     </div>
   )
 }
