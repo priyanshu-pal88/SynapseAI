@@ -1,12 +1,13 @@
 require('dotenv').config();
-const { createServer } = require("http");
 const { Server } = require("socket.io");
 const cookie = require("cookie")
 const jwt = require("jsonwebtoken");
 const userModel = require("../models/user.model");
-const { generateResponse, generateVector } = require("../services/ai.service");
+const { generateResponse } = require("../services/ai.service");
 const messageModel = require("../models/message.model");
-const { createMemory, queryMemory } = require("../services/vector.service");
+const { createMemory, queryMemory, queryDocuments } = require("../services/vector.service");
+const documentModel = require('../models/document.model');
+
 
 
 
@@ -65,50 +66,93 @@ function initSocketServer(httpServer) {
                 })
 
                 let message
-                let vectors = null
                 let memory = []
                 let chatHistory = []
+                let documentContext = []
 
-                try {
-                    message = await messageModel.create({
-                        chat: messagePayload.chat,
-                        user: socket.user._id,
-                        content: messagePayload.content,
-                        role: "user"
-                    })
+                const documentIds = messagePayload.documentIds ?? []
+                let documents = []
 
-                    vectors = await generateVector(messagePayload.content)
-
-                    await createMemory({
-                        vectors,
-                        messageId: message._id,
-                        metadata: {
-                            chat: messagePayload.chat,
-                            user: socket.user._id,
-                            text: messagePayload.content
-                        }
-                    })
-                } catch (vectorError) {
-                    console.warn('Vector memory unavailable, continuing without it:', vectorError.message)
+                if (!Array.isArray(documentIds)) {
+                    return socket.emit("ai-error", {
+                        message: "Invalid document IDs"
+                    });
                 }
 
+                if (documentIds.length > 0) {
+
+                    documents = await documentModel.find({
+                        _id: { $in: documentIds },
+                        user: socket.user._id,
+                        chat,
+                        status: "ready"
+                    });
+
+                    if (documents.length !== documentIds.length) {
+                        return socket.emit("ai-error", {
+                            message: "One or more documents are invalid or still processing"
+                        });
+                    }
+
+                }
+                else {
+                    documents = await documentModel.find({
+                        user: socket.user._id,
+                        chat: messagePayload.chat,
+                        status: "ready"
+                    });
+                }
+
+                if (documents.length > 0) {
+                    documentContext = await queryDocuments({
+                        query: messagePayload.content,
+                        limit: 5,
+                        metadata: {
+                            user: socket.user._id,
+                            chat: messagePayload.chat,
+                            documentIds
+                        }
+                    })
+                }
+
+                message = await messageModel.create({
+                    chat: messagePayload.chat,
+                    user: socket.user._id,
+                    content: messagePayload.content,
+                    role: "user",
+
+                    attachments: documents.map(doc => ({
+                        document: doc._id,
+                        fileName: doc.fileName
+                    }))
+                });
+
+                console.log({"message" : message})
+
                 try {
-                    ;[memory, chatHistory] = await Promise.all([
-                        vectors ? queryMemory({
-                            queryVector: vectors,
-                            limit: 3,
+                    [memory, chatHistory] = await Promise.all([
+                        messagePayload.content ? queryMemory({
+                            query: messagePayload.content,
+                            limit: 5,
                             metadata: {
-                                user: socket.user._id
+                                user: String(socket.user._id),
+                                chat: String(messagePayload.chat)
                             }
                         }) : Promise.resolve([]),
                         messageModel.find({
-                            chat: messagePayload.chat
+                            chat: messagePayload.chat,
+                            user: socket.user._id
                         }).sort({ createdAt: -1 }).limit(10).lean().then(res => res.reverse())
                     ])
+                    console.log('Memory lookup successful:', memory)
+
                 } catch (memoryError) {
+
                     console.warn('Memory lookup failed, using recent chat history only:', memoryError.message)
+
                     chatHistory = await messageModel.find({
-                        chat: messagePayload.chat
+                        chat: messagePayload.chat,
+                        user: socket.user._id
                     }).sort({ createdAt: -1 }).limit(10).lean().then(res => res.reverse())
                     memory = []
                 }
@@ -123,13 +167,33 @@ function initSocketServer(httpServer) {
                 const ltm = memory.length ? [{
                     role: "user",
                     parts: [{
+
+                        /* text: `these are some previous messages from the chat,use them to generate a response
+                         ${memory.map(item => item.metadata.text).join("\n")} */
                         text: `these are some previous messages from the chat,use them to generate a response
-                        ${memory.map(item => item.metadata.text).join("\n")}
-                        `
+                        ${memory.map(item => item.pageContent).join("\n")}`
                     }]
                 }] : []
 
-                const response = await generateResponse([...ltm, ...stm])
+                const pdfContext = documentContext.length
+                    ? [{
+                        role: "user",
+                        parts: [{
+                            text: `Use the following document excerpts to answer the user's question.
+                                    Treat these excerpts as reference material.
+
+            ${documentContext.map((doc, index) => `
+                Excerpt ${index + 1}:
+                Page: ${doc.metadata.page ?? "Unknown"}
+                Content: ${doc.pageContent}
+            `).join("\n\n")}`
+                        }]
+                    }]
+                    : [];
+
+                const response = await generateResponse([...ltm, ...stm, ...pdfContext])
+
+
 
                 socket.emit('ai-typing', {
                     chat: messagePayload.chat,
@@ -141,29 +205,42 @@ function initSocketServer(httpServer) {
                     chat: messagePayload.chat
                 })
 
-                try {
-                    const [responseMessage, responseVectors] = await Promise.all([
-                        messageModel.create({
-                            chat: messagePayload.chat,
-                            user: socket.user._id,
-                            content: response,
-                            role: "model"
-                        }),
-                        generateVector(response)
-                    ]);
+                const responseMessage = await messageModel.create({
+                    chat: messagePayload.chat,
+                    user: socket.user._id,
+                    content: response,
+                    role: "model",
+                });
 
-                    await createMemory({
-                        vectors: responseVectors,
+                Promise.allSettled([
+                    createMemory({
+                        text: message.content,
+                        messageId: message._id,
+                        metadata: {
+                            user: String(socket.user._id),
+                            chat: String(messagePayload.chat),
+                        },
+                    }),
+
+                    createMemory({
+                        text: responseMessage.content,
                         messageId: responseMessage._id,
                         metadata: {
-                            chat: messagePayload.chat,
-                            user: socket.user._id,
-                            text: response
+                            user: String(socket.user._id),
+                            chat: String(messagePayload.chat),
+                        },
+                    }),
+                ]).then((results) => {
+                    results.forEach((result) => {
+                        if (result.status === "rejected") {
+                            console.warn(
+                                "Memory indexing failed:",
+                                result.reason?.message || result.reason
+                            );
                         }
                     });
-                } catch (saveError) {
-                    console.warn('Failed to save AI response memory, but the answer still reached the user:', saveError.message)
-                }
+                })
+
             } catch (error) {
                 console.error('AI message failed:', error);
                 socket.emit('ai-typing', {
