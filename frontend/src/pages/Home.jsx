@@ -27,11 +27,6 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
-const STORAGE_KEYS = {
-  chats: 'chats_v1',
-  active: 'activeChatId_v1',
-}
-
 const Home = () => {
   const dispatch = useDispatch()
   const chats = useSelector(selectChats)
@@ -59,14 +54,12 @@ const Home = () => {
 
 
   const handleToggleSidebar = () => {
-
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 960px)').matches) {
       setSidebarOpen((s) => !s)
     }
   }
 
   const handleCloseSidebar = () => {
-
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 960px)').matches) {
       setSidebarOpen(false)
     }
@@ -77,11 +70,8 @@ const Home = () => {
     const start = Date.now()
     try {
       const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
-      // console.log('Authentication check response:', response.data)
-
       if (response.data.success) {
         setIsAuthenticated(true)
-        // console.log('User authenticated successfully')
       } else {
         setIsAuthenticated(false)
         navigate('/login')
@@ -99,7 +89,6 @@ const Home = () => {
   }
 
   useEffect(() => {
-    // Check authentication first
     checkAuthentication()
   }, [])
 
@@ -107,11 +96,22 @@ const Home = () => {
     // Only load chats and setup socket if authenticated
     if (!isAuthenticated) return
 
-    // console.log('Loading chats for authenticated user...')
+    // Load user chats from server
     axios.get(`${API_BASE_URL}/api/chat`, { withCredentials: true })
       .then((res) => {
         console.log('Chats loaded successfully:', res.data);
-        dispatch(setChats(res.data.chats.reverse()))
+        const serverChats = (res.data.chats || []).reverse()
+        dispatch(setChats(serverChats))
+
+        // Requirement 1: Whenever user logs in or opens the page, the first chat gets selected automatically
+        if (serverChats.length > 0) {
+          const firstId = serverChats[0]._id || serverChats[0].id
+          dispatch(selectChat(firstId))
+          getMessages(firstId)
+        } else {
+          dispatch(selectChat(''))
+          setMessage([])
+        }
       }).catch((err) => {
         console.log('GET /api/chat failed:', err?.response?.status, err?.response?.data || err?.message)
       })
@@ -122,12 +122,9 @@ const Home = () => {
 
     // Handle typing indicator
     newSocket.on("ai-typing", (payload) => {
-      // console.log("AI typing indicator received:", payload);
       if (payload.typing) {
         setMessage((prevMessages) => {
-          // Remove any existing typing indicator first
           const withoutTyping = prevMessages.filter(m => !m.typing);
-          // Add new typing indicator
           return [...withoutTyping, {
             id: 'typing-indicator',
             role: 'assistant',
@@ -137,7 +134,6 @@ const Home = () => {
           }];
         });
       } else {
-        // Remove typing indicator when AI stops typing
         setMessage((prevMessages) => prevMessages.filter(m => !m.typing));
       }
     });
@@ -155,7 +151,8 @@ const Home = () => {
       });
       if (messagePayload?.chat) {
         dispatch(addMessage({
-          chatId: messagePayload.chat, message: {
+          chatId: messagePayload.chat,
+          message: {
             id: uid(),
             role: 'assistant',
             content: messagePayload.content,
@@ -195,7 +192,6 @@ const Home = () => {
 
     setSocket(newSocket);
 
-    // Cleanup socket on unmount or when dependencies change
     return () => {
       if (newSocket) {
         newSocket.disconnect()
@@ -208,14 +204,13 @@ const Home = () => {
 
   // Handle file selection from InputBar
   function handleFilesChange(newFiles) {
-    // Add files to pending list with local metadata
     const filesToAdd = newFiles.map(file => ({
-      file,               // The actual File object
+      file,
       name: file.name,
       size: file.size,
-      status: null,       // null = just selected, 'uploading', 'processing', 'ready', 'error'
-      documentId: null,    // Will be set after successful upload
-      document: null,      // Full document record from server
+      status: null,
+      documentId: null,
+      document: null,
     }))
     setPendingFiles(prev => [...prev, ...filesToAdd])
   }
@@ -225,7 +220,6 @@ const Home = () => {
     setPendingFiles(prev => {
       const updated = [...prev]
       const removed = updated.splice(index, 1)[0]
-      // Also remove from uploadedDocs if it was uploaded
       if (removed.documentId) {
         setUploadedDocs(prevDocs => prevDocs.filter(d => d._id !== removed.documentId))
       }
@@ -233,12 +227,11 @@ const Home = () => {
     })
   }
 
-  // Upload a single file to the backend — returns the document or null
+  // Upload a single file to the backend
   async function uploadSingleFile(file, chatId, fileIndex) {
     const formData = new FormData()
     formData.append('file', file)
 
-    // Mark as uploading
     setPendingFiles(prev => prev.map((f, i) =>
       i === fileIndex ? { ...f, status: 'uploading' } : f
     ))
@@ -255,7 +248,6 @@ const Home = () => {
 
       const doc = response.data.document
 
-      // Mark as ready
       setPendingFiles(prev => prev.map((f, i) =>
         i === fileIndex ? {
           ...f,
@@ -270,7 +262,6 @@ const Home = () => {
       const errMsg = error?.response?.data?.message || error.message || 'Upload failed'
       console.error('File upload failed:', errMsg)
 
-      // Mark as error
       setPendingFiles(prev => prev.map((f, i) =>
         i === fileIndex ? { ...f, status: 'error' } : f
       ))
@@ -279,14 +270,13 @@ const Home = () => {
     }
   }
 
-  // Upload all pending files — returns { successDocs, failedNames }
+  // Upload all pending files
   async function uploadAllPendingFiles(chatId) {
     const filesToUpload = pendingFiles
       .map((f, index) => ({ ...f, originalIndex: index }))
       .filter(f => !f.documentId && f.status !== 'error')
 
     if (filesToUpload.length === 0) {
-      // All files were already uploaded or errored — collect already-uploaded docs
       const alreadyUploaded = pendingFiles.filter(f => f.documentId && f.document)
         .map(f => f.document)
       return { successDocs: alreadyUploaded, failedNames: [] }
@@ -311,24 +301,26 @@ const Home = () => {
     const text = input.trim()
     const hasFiles = pendingFiles.length > 0
 
-    if ((!text && !hasFiles) || isSending) return
+    // Requirement 3: Text message is strictly required!
+    // Do not allow sending with empty message even if a file is selected.
+    if (!text || isSending || isUploading) return
 
     // 1. Clear input & lock UI
     setInput('')
     setIsSending(true)
 
-    // Capture file names before any state changes
-    const fileNames = pendingFiles.map(f => f.name)
-    const fileCount = pendingFiles.length
-
     try {
-      let targetChatId = activeChatId
+      // Requirement 2: Check if activeChatId actually exists in loaded chats
+      const chatExists = chats.some(c => (c._id || c.id) === activeChatId)
+      let targetChatId = chatExists ? activeChatId : null
 
-      // 2. If new conversation, create the session on the backend first
+      // If no chat exists or activeChatId is invalid, create a new chat on backend
       if (!targetChatId) {
-        targetChatId = await handleNewChat({ programmatic: true, draftText: text || pendingFiles[0]?.name || 'Document chat' })
+        const titleText = text.slice(0, 30) || 'New chat'
+        targetChatId = await handleNewChat({ programmatic: true, draftText: titleText })
         if (!targetChatId) {
           setIsSending(false)
+          alert('Could not start a new chat session on the server. Please try again.')
           return
         }
       }
@@ -375,7 +367,7 @@ const Home = () => {
       const userMsg = {
         id: uid(),
         role: 'user',
-        content: text || (uploadedDocuments.length > 0 ? `Uploaded ${uploadedDocuments.length} document(s)` : ''),
+        content: text,
         ts: Date.now(),
         attachments: attachmentInfo.length > 0 ? attachmentInfo : undefined,
       }
@@ -402,7 +394,7 @@ const Home = () => {
       // Update title on server in background
       const currentChat = chats.find(c => (c.id || c._id) === targetChatId)
       if (currentChat && currentChat.title === 'New chat' && (!currentChat.messages || currentChat.messages.length === 0)) {
-        const newTitle = (text || fileNames[0] || 'Document chat').slice(0, 30)
+        const newTitle = text.slice(0, 30)
         axios.patch(`${API_BASE_URL}/api/chat/${targetChatId}`, { title: newTitle }, { withCredentials: true })
           .catch(err => console.warn('Failed to update chat title:', err?.message))
       }
@@ -417,13 +409,12 @@ const Home = () => {
       // 6. Emit message to AI over socket with document IDs from upload response
       socket.emit("ai-message", {
         chat: targetChatId,
-        content: text || `I've uploaded ${fileCount} document(s). Please analyze them.`,
+        content: text,
         documentIds: documentIds.length > 0 ? documentIds : undefined,
       });
 
       // 7. Clear pending files after successful send
       setPendingFiles([])
-      // Keep track of uploaded docs for this chat session
       setUploadedDocs(prev => [...prev, ...uploadedDocuments])
 
     } catch (error) {
@@ -439,29 +430,35 @@ const Home = () => {
     const hasDraft = input.trim().length > 0
     if (!isProgrammatic && (hasCurrent || hasDraft)) {
       const proceed = window.confirm('Start a new chat? The current chat will remain saved.')
-      if (!proceed) return
+      if (!proceed) return null
     }
 
     let serverId = ''
     let serverTitle = ''
-    const titles = options.draftText ? options.draftText.slice(0, 30) : (hasDraft ? input.trim().slice(0, 30) : 'New chat')
+    const titleText = options.draftText ? options.draftText.slice(0, 30) : (hasDraft ? input.trim().slice(0, 30) : 'New chat')
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/chat`, { title: titles }, { withCredentials: true })
+      const res = await axios.post(`${API_BASE_URL}/api/chat`, { title: titleText }, { withCredentials: true })
       serverId = res?.data?.chat?._id || res?.data?._id || ''
       serverTitle = res?.data?.chat?.title || res?.data?.title || ''
     } catch (err) {
-      console.warn('Create chat on server failed, using local id:', err?.response?.data || err?.message || err)
+      console.error('Create chat on server failed:', err?.response?.data || err?.message || err)
+      if (isProgrammatic) {
+        return null
+      }
+    }
+
+    if (!serverId && isProgrammatic) {
+      return null
     }
 
     const id = serverId || uid()
-    const title = serverTitle || 'New chat'
+    const title = serverTitle || titleText || 'New chat'
     dispatch(newChatAction({ id, title, createdAt: Date.now() }))
 
     if (!isProgrammatic) {
       setInput('')
       setMessage([])
-      // Clear files when starting a new chat
       setPendingFiles([])
       setUploadedDocs([])
     }
@@ -473,6 +470,7 @@ const Home = () => {
   }
 
   const getMessages = async (chatId) => {
+    if (!chatId) return
     console.log('Fetching messages for chatId:', chatId)
     try {
       const response = await axios.get(`${API_BASE_URL}/api/chat/messages/${chatId}`, { withCredentials: true })
@@ -481,7 +479,7 @@ const Home = () => {
       if (response.data && response.data.messages) {
         setMessage(response.data.messages.reverse().map(msg => ({
           id: msg._id,
-          role: msg.role == 'user' ? "user" : "assistant",
+          role: msg.role === 'user' ? "user" : "assistant",
           content: msg.content,
           ts: new Date(msg.createdAt).getTime(),
           attachments: msg.attachments && msg.attachments.length > 0
@@ -513,10 +511,6 @@ const Home = () => {
 
   async function handleDeleteChat(chatId) {
     const chatToDelete = chats.find(c => (c._id || c.id) === chatId)
-    const chatTitle = chatToDelete?.title || 'this chat'
-
-
-
 
     try {
       await axios.delete(`${API_BASE_URL}/api/chat/messages/${chatId}`, { withCredentials: true })
@@ -524,8 +518,16 @@ const Home = () => {
 
       dispatch(deleteChatAction(chatId))
 
+      const remainingChats = chats.filter(c => (c._id || c.id) !== chatId)
       if (activeChatId === chatId) {
-        setMessage([])
+        if (remainingChats.length > 0) {
+          const nextId = remainingChats[0]._id || remainingChats[0].id
+          dispatch(selectChat(nextId))
+          getMessages(nextId)
+        } else {
+          dispatch(selectChat(''))
+          setMessage([])
+        }
         setPendingFiles([])
         setUploadedDocs([])
       }
@@ -533,8 +535,16 @@ const Home = () => {
       console.error('Failed to delete chat from server:', err?.response?.data || err?.message)
       alert('Failed to delete chat from server, but removing from local storage.')
       dispatch(deleteChatAction(chatId))
+      const remainingChats = chats.filter(c => (c._id || c.id) !== chatId)
       if (activeChatId === chatId) {
-        setMessage([])
+        if (remainingChats.length > 0) {
+          const nextId = remainingChats[0]._id || remainingChats[0].id
+          dispatch(selectChat(nextId))
+          getMessages(nextId)
+        } else {
+          dispatch(selectChat(''))
+          setMessage([])
+        }
         setPendingFiles([])
         setUploadedDocs([])
       }
@@ -543,10 +553,7 @@ const Home = () => {
 
   async function handleRenameChat(chatId, newTitle) {
     try {
-      // Update on server
       await axios.patch(`${API_BASE_URL}/api/chat/${chatId}`, { title: newTitle }, { withCredentials: true })
-
-      // Update local state
       const updatedChats = chats.map(chat => {
         const id = chat._id || chat.id
         if (id === chatId) {
@@ -567,7 +574,6 @@ const Home = () => {
       handleSend()
     }
   }
-
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return
@@ -591,19 +597,13 @@ const Home = () => {
 
   const handleConfirmLogout = async () => {
     setShowLogoutModal(false)
-
     try {
-      // Clear authentication token by making logout request to server
       await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true })
-
-      // Clear local storage
       localStorage.removeItem('chats_v1')
       localStorage.removeItem('activeChatId_v1')
-
       navigate('/login')
     } catch (err) {
       console.error('Logout failed:', err?.response?.data || err?.message)
-
       localStorage.clear()
       navigate('/login')
     }
@@ -613,10 +613,8 @@ const Home = () => {
     setShowLogoutModal(false)
   }
 
-  // Add 'sidebar-open' class when sidebar is open so mobile CSS shows it
   const containerClass = `chat-layout ${sidebarOpen ? 'sidebar-open' : 'no-sidebar'}`
 
-  // Show loading screen while checking authentication
   if (isCheckingAuth) {
     return (
       <div className="auth-loading">
@@ -626,8 +624,6 @@ const Home = () => {
     )
   }
 
-  // If not authenticated, the useEffect will redirect to login
-  // This return is just a fallback
   if (!isAuthenticated) {
     return null
   }
@@ -646,7 +642,6 @@ const Home = () => {
         onClose={handleCloseSidebar}
       />
 
-
       <main className="chat-main">
         <ChatHeader
           sidebarOpen={sidebarOpen}
@@ -656,18 +651,16 @@ const Home = () => {
 
         <Messages message={message} />
 
-        {
-          activeChatId?.length >= 0 &&
-          <InputBar
-            value={input}
-            onChange={setInput}
-            onSend={handleSend}
-            disabled={isSending}
-            files={pendingFiles}
-            onFilesChange={handleFilesChange}
-            onRemoveFile={handleRemoveFile}
-            isUploading={isUploading}
-          />}
+        <InputBar
+          value={input}
+          onChange={setInput}
+          onSend={handleSend}
+          disabled={isSending}
+          files={pendingFiles}
+          onFilesChange={handleFilesChange}
+          onRemoveFile={handleRemoveFile}
+          isUploading={isUploading}
+        />
       </main>
 
       {/* Backdrop for mobile when sidebar open */}

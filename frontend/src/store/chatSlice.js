@@ -1,4 +1,4 @@
-  import { createSlice, createSelector } from '@reduxjs/toolkit'
+import { createSlice, createSelector } from '@reduxjs/toolkit'
 
 const STORAGE_KEYS = {
   chats: 'chats_v1',
@@ -8,9 +8,8 @@ const STORAGE_KEYS = {
 const loadInitialState = () => {
   try {
     const rawChats = localStorage.getItem(STORAGE_KEYS.chats)
-    const rawActive = localStorage.getItem(STORAGE_KEYS.active)
     const chats = rawChats ? JSON.parse(rawChats) : []
-    const currentChatId = rawActive || (chats[0]?.id || '')
+    const currentChatId = chats.length > 0 ? (chats[0]?.id || chats[0]?._id || '') : ''
     return { chats, currentChatId }
   } catch (e) {
     return { chats: [], currentChatId: '' }
@@ -34,12 +33,14 @@ const chatSlice = createSlice({
     },
     setChats(state, action) {
       state.chats = (action.payload || []).map(normalizeChat)
-      if (!state.currentChatId && state.chats.length) {
+      if (state.chats.length > 0) {
         state.currentChatId = state.chats[0]?.id || state.chats[0]?._id || ''
+      } else {
+        state.currentChatId = ''
       }
     },
     newChat(state, action) {
-      const { id, _id, title , createdAt = Date.now() } = action.payload
+      const { id, _id, title, createdAt = Date.now() } = action.payload
       const normalizedChat = normalizeChat({ id: id || _id, _id: _id || id, title, createdAt, messages: [] })
       state.chats = [normalizedChat, ...state.chats]
       state.currentChatId = normalizedChat.id
@@ -86,7 +87,7 @@ export const selectCurrentChatId = (state) => state.chat.currentChatId
 // Memoized selectors to prevent unnecessary re-renders
 export const selectCurrentChat = createSelector(
   [selectChats, selectCurrentChatId],
-  (chats, currentChatId) => chats.find((c) => c.id === currentChatId) || null
+  (chats, currentChatId) => chats.find((c) => (c.id === currentChatId || c._id === currentChatId)) || null
 )
 
 export const selectCurrentMessages = createSelector(

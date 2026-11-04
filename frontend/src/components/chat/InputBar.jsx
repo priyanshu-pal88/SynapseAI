@@ -4,10 +4,15 @@ import './InputBar.css'
 const InputBar = ({ value, onChange, onSend, disabled, files, onFilesChange, onRemoveFile, isUploading }) => {
   const fileInputRef = useRef(null)
 
+  const hasFiles = files && files.length > 0
+  const isSendDisabled = disabled || isUploading || !value.trim()
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      onSend()
+      if (!isSendDisabled) {
+        onSend()
+      }
     }
   }
 
@@ -23,8 +28,6 @@ const InputBar = ({ value, onChange, onSend, disabled, files, onFilesChange, onR
   const handleAttachClick = () => {
     fileInputRef.current?.click()
   }
-
-  const hasFiles = files && files.length > 0
 
   return (
     <div className="input-container">
@@ -91,14 +94,14 @@ const InputBar = ({ value, onChange, onSend, disabled, files, onFilesChange, onR
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={hasFiles ? "Ask about your documents..." : "Message SynapseAI..."}
+          placeholder={hasFiles ? "Ask a question about your document(s)..." : "Message SynapseAI..."}
           rows={1}
         />
         <button
           className="send-btn"
           onClick={onSend}
-          disabled={disabled || isUploading || (!value.trim() && !hasFiles)}
-          title="Send message"
+          disabled={isSendDisabled}
+          title={!value.trim() && hasFiles ? "Please enter a message to send with your file" : "Send message"}
         >
           <i className="ri-arrow-up-line"></i>
         </button>
