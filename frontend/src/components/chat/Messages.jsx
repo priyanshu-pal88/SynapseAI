@@ -12,6 +12,35 @@ const Messages = ({ message }) => {
 
   const hasMessages = message && message.length > 0
 
+  const handleOpenPdf = (e, url) => {
+    e.stopPropagation()
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  const handleDownloadPdf = async (e, url, fileName) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!url) return
+
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error('Fetch failed')
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = fileName || 'document.pdf'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
+    } catch (err) {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   return (
     <div className={`messages ${hasMessages ? 'has-messages' : 'empty-view'}`} role="log" aria-live="polite">
       {!hasMessages && (
@@ -84,17 +113,41 @@ const Messages = ({ message }) => {
                     <span className="sender-name">{isUser ? 'You' : 'Synapse AI'}</span>
                   </div>
 
-                  {/* Attachment badges */}
+                  {/* Clean, luxury attachment cards (ChatGPT / Claude style) */}
                   {hasAttachments && (
-                    <div className="message-attachments">
-                      {m.attachments.map((att, attIndex) => (
-                        <div key={attIndex} className="attachment-badge">
-                          <i className="ri-file-pdf-2-line"></i>
-                          <span className="attachment-name">
-                            {att.fileName || 'Document'}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="message-attachments-grid">
+                      {m.attachments.map((att, attIndex) => {
+                        const fileUrl = att.fileUrl;
+                        const docName = att.fileName || 'Document.pdf';
+
+                        return (
+                          <div
+                            key={attIndex}
+                            className={`msg-file-card ${fileUrl ? 'clickable' : ''}`}
+                            onClick={(e) => fileUrl && handleOpenPdf(e, fileUrl)}
+                            title={fileUrl ? `Click to view ${docName}` : docName}
+                          >
+                            <div className="msg-file-icon">
+                              <i className="ri-file-pdf-2-fill"></i>
+                            </div>
+                            <div className="msg-file-meta">
+                              <span className="msg-file-name">{docName}</span>
+                              <span className="msg-file-type">PDF</span>
+                            </div>
+                            {fileUrl && (
+                              <button
+                                type="button"
+                                className="msg-file-dl-btn"
+                                onClick={(e) => handleDownloadPdf(e, fileUrl, docName)}
+                                title="Download PDF"
+                                aria-label="Download PDF"
+                              >
+                                <i className="ri-download-2-line"></i>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 

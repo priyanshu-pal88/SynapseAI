@@ -67,7 +67,7 @@ async function updateChat(req, res) {
 async function getMessages(req, res) {
     try {
         const { chatId } = req.params
-        const messages = await messageModel.find({ chat: chatId }).populate("attachments.document","fileName fileURl").sort({ createdAt: -1 })
+        const messages = await messageModel.find({ chat: chatId }).populate("attachments.document","fileName fileUrl").sort({ createdAt: -1 })
 
         res.status(200).json({
             message: "Messages retrieved successfully",

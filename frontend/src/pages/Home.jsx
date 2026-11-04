@@ -360,6 +360,7 @@ const Home = () => {
       const attachmentInfo = uploadedDocuments.map(doc => ({
         fileName: doc.fileName,
         documentId: doc._id,
+        fileUrl: doc.fileUrl || doc.fileURl || null,
       }))
 
       const documentIds = uploadedDocuments.map(doc => doc._id)
@@ -486,6 +487,7 @@ const Home = () => {
             ? msg.attachments.map(att => ({
               fileName: att.fileName || att.document?.fileName || 'Document',
               documentId: att.document?._id || att.document,
+              fileUrl: att.document?.fileUrl || att.document?.fileURl || att.fileUrl || att.fileURl || null,
             }))
             : undefined,
         })))
