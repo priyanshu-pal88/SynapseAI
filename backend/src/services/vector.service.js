@@ -45,10 +45,10 @@ async function createMemory({ text, metadata, messageId }) {
 
 async function queryMemory({ query, limit = 5, metadata }) {
     const vectorStore = await initVectorStore()
-    console.log("Querying memory with query:", query, "limit:", limit, "metadata:", metadata.user);
+    // console.log("Querying memory with query:", query, "limit:", limit, "metadata:", metadata.user);
 
     const retriever = vectorStore.asRetriever({
-        searchType: "mmr",
+        searchType: "similarity",
         k: limit,
         filter: { user: String(metadata.user) },
         searchKwargs: {
@@ -63,7 +63,7 @@ async function queryMemory({ query, limit = 5, metadata }) {
 
 async function queryDocuments({
     query,
-    limit = 5,
+    limit = 10,
     metadata
 }) {
     try {
@@ -73,7 +73,7 @@ async function queryDocuments({
         const vectorStore = await initVectorStore();
 
         const retriever = vectorStore.asRetriever({
-            searchType: "mmr",
+            searchType: "similarity",
             k: limit,
             filter: {
                 user: String(metadata.user),
@@ -84,7 +84,7 @@ async function queryDocuments({
                 }
             },
             searchKwargs: {
-                fetchK: 10
+                fetchK: 15
             }
         });
 

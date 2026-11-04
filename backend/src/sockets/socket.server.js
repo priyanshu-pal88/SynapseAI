@@ -72,6 +72,7 @@ function initSocketServer(httpServer) {
 
                 const documentIds = messagePayload.documentIds ?? []
                 let documents = []
+                let attachedDocuments = []
 
                 if (!Array.isArray(documentIds)) {
                     return socket.emit("ai-error", {
@@ -84,7 +85,7 @@ function initSocketServer(httpServer) {
                     documents = await documentModel.find({
                         _id: { $in: documentIds },
                         user: socket.user._id,
-                        chat,
+                        chat: messagePayload.chat,
                         status: "ready"
                     });
 
@@ -93,14 +94,16 @@ function initSocketServer(httpServer) {
                             message: "One or more documents are invalid or still processing"
                         });
                     }
-
+                    attachedDocuments = documents
                 }
                 else {
                     documents = await documentModel.find({
                         user: socket.user._id,
                         chat: messagePayload.chat,
                         status: "ready"
+
                     });
+
                 }
 
                 if (documents.length > 0) {
@@ -110,9 +113,10 @@ function initSocketServer(httpServer) {
                         metadata: {
                             user: socket.user._id,
                             chat: messagePayload.chat,
-                            documentIds
+                            documentIds: documents.map(doc => String(doc._id))
                         }
                     })
+                    console.log(documentContext)
                 }
 
                 message = await messageModel.create({
@@ -121,13 +125,13 @@ function initSocketServer(httpServer) {
                     content: messagePayload.content,
                     role: "user",
 
-                    attachments: documents.map(doc => ({
+                    attachments: attachedDocuments.map(doc => ({
                         document: doc._id,
                         fileName: doc.fileName
                     }))
                 });
 
-                console.log({"message" : message})
+                console.log({ "message": message })
 
                 try {
                     [memory, chatHistory] = await Promise.all([

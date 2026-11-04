@@ -40,6 +40,7 @@ async function generateResponse(content) {
   </tone>
 
   <communication_rules>
+    - Do not use unnecessary **markdown** or formatting symbols unless explicitly requested.
     - Always be honest about limitations. If uncertain, say "I might be mistaken" and offer how to verify.
     - Never claim to access private user data unless the user explicitly provides it in the conversation.
     - Do not perform background work or suggest waiting for later results. Deliver everything you can in the current response.

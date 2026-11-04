@@ -29,7 +29,7 @@ const messageSchema = new mongoose.Schema(
       type: [{
         document: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Document"
+          ref: "documents"
         },
         fileName: String
       }],
@@ -40,7 +40,7 @@ const messageSchema = new mongoose.Schema(
       {
         document: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Document",
+          ref: "documents",
         },
         page: Number,
         chunkIndex: Number,
@@ -55,7 +55,7 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// messageSchema.index({ chat: 1, createdAt: 1 });
+messageSchema.index({ chat: 1, createdAt: 1 });
 
 const messageModel = mongoose.model("message", messageSchema);
 

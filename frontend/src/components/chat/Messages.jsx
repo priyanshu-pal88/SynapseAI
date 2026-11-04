@@ -62,6 +62,7 @@ const Messages = ({ message }) => {
         <div className="messages-flow">
           {message.map((m, index) => {
             const isUser = m.role === 'user' || m.type === 'user';
+            const hasAttachments = m.attachments && m.attachments.length > 0;
 
             return (
               <div key={m.id || `msg-${index}`} className={`message ${isUser ? 'user' : 'assistant'}`}>
@@ -82,6 +83,20 @@ const Messages = ({ message }) => {
                   <div className="message-header-meta">
                     <span className="sender-name">{isUser ? 'You' : 'Synapse AI'}</span>
                   </div>
+
+                  {/* Attachment badges */}
+                  {hasAttachments && (
+                    <div className="message-attachments">
+                      {m.attachments.map((att, attIndex) => (
+                        <div key={attIndex} className="attachment-badge">
+                          <i className="ri-file-pdf-2-line"></i>
+                          <span className="attachment-name">
+                            {att.fileName || 'Document'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {m.typing ? (
                     <div className="typing-animation">

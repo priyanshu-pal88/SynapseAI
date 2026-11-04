@@ -5,6 +5,8 @@ const documentModel = require("../models/document.model")
 const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf")
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters")
 const { initVectorStore } = require("../services/vector.service")
+const uploadFile = require("../services/cloud.service")
+const { Document } = require("@langchain/core/documents")
 
 async function createChat(req, res) {
     const { title } = req.body
@@ -73,6 +75,7 @@ async function getMessages(req, res) {
         })
     }
     catch (error) {
+        console.log(error.message)
         res.status(500).json({ message: "Can't retrieve the messages for this session", error: error.message })
     }
 }
@@ -108,7 +111,7 @@ async function deleteChat(req, res) {
 async function uploadDocument(req, res) {
     try {
         const { chatId } = req.params
-        const { user } = req.user
+        const user = req.user
         const file = req.file
         if (!file) {
             return res.status(400).json({ message: "No file uploaded" })
@@ -119,7 +122,8 @@ async function uploadDocument(req, res) {
             return res.status(404).json({ message: "Chat not found" })
         }
 
-        const response = await uploadToImageKit(file)
+        const response = await uploadFile(file)
+        console.log(response)
 
         const document = await documentModel.create({
             user: user._id,
@@ -195,6 +199,7 @@ async function uploadDocument(req, res) {
 
 
     } catch (error) {
+        console.log(error)
         res.status(500).json({ message: "Error uploading document", error: error.message })
 
     }

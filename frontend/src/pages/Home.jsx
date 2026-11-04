@@ -22,8 +22,8 @@ import {
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
-// const API_BASE_URL =  'http://localhost:3000'
+// const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
+const API_BASE_URL = 'http://localhost:3000'
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
@@ -52,6 +52,11 @@ const Home = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const navigate = useNavigate()
 
+  // ── Document Upload State ──
+  const [pendingFiles, setPendingFiles] = useState([])   // Files selected but not yet uploaded
+  const [uploadedDocs, setUploadedDocs] = useState([])   // Successfully uploaded document records
+  const [isUploading, setIsUploading] = useState(false)
+
 
   const handleToggleSidebar = () => {
 
@@ -73,7 +78,7 @@ const Home = () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, { withCredentials: true })
       // console.log('Authentication check response:', response.data)
-      
+
       if (response.data.success) {
         setIsAuthenticated(true)
         // console.log('User authenticated successfully')
@@ -149,12 +154,14 @@ const Home = () => {
         }];
       });
       if (messagePayload?.chat) {
-        dispatch(addMessage({ chatId: messagePayload.chat, message: {
-          id: uid(),
-          role: 'assistant',
-          content: messagePayload.content,
-          ts: Date.now(),
-        } }))
+        dispatch(addMessage({
+          chatId: messagePayload.chat, message: {
+            id: uid(),
+            role: 'assistant',
+            content: messagePayload.content,
+            ts: Date.now(),
+          }
+        }))
       }
     })
 
@@ -197,53 +204,205 @@ const Home = () => {
 
   }, [isAuthenticated])
 
+  // ── Document Upload Logic ──
+
+  // Handle file selection from InputBar
+  function handleFilesChange(newFiles) {
+    // Add files to pending list with local metadata
+    const filesToAdd = newFiles.map(file => ({
+      file,               // The actual File object
+      name: file.name,
+      size: file.size,
+      status: null,       // null = just selected, 'uploading', 'processing', 'ready', 'error'
+      documentId: null,    // Will be set after successful upload
+      document: null,      // Full document record from server
+    }))
+    setPendingFiles(prev => [...prev, ...filesToAdd])
+  }
+
+  // Remove a file from the pending list
+  function handleRemoveFile(index) {
+    setPendingFiles(prev => {
+      const updated = [...prev]
+      const removed = updated.splice(index, 1)[0]
+      // Also remove from uploadedDocs if it was uploaded
+      if (removed.documentId) {
+        setUploadedDocs(prevDocs => prevDocs.filter(d => d._id !== removed.documentId))
+      }
+      return updated
+    })
+  }
+
+  // Upload a single file to the backend — returns the document or null
+  async function uploadSingleFile(file, chatId, fileIndex) {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    // Mark as uploading
+    setPendingFiles(prev => prev.map((f, i) =>
+      i === fileIndex ? { ...f, status: 'uploading' } : f
+    ))
+
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/chat/${chatId}/upload`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
+      )
+
+      const doc = response.data.document
+
+      // Mark as ready
+      setPendingFiles(prev => prev.map((f, i) =>
+        i === fileIndex ? {
+          ...f,
+          status: doc.status || 'ready',
+          documentId: doc._id,
+          document: doc
+        } : f
+      ))
+
+      return doc
+    } catch (error) {
+      const errMsg = error?.response?.data?.message || error.message || 'Upload failed'
+      console.error('File upload failed:', errMsg)
+
+      // Mark as error
+      setPendingFiles(prev => prev.map((f, i) =>
+        i === fileIndex ? { ...f, status: 'error' } : f
+      ))
+
+      return { _error: true, fileName: file.name, message: errMsg }
+    }
+  }
+
+  // Upload all pending files — returns { successDocs, failedNames }
+  async function uploadAllPendingFiles(chatId) {
+    const filesToUpload = pendingFiles
+      .map((f, index) => ({ ...f, originalIndex: index }))
+      .filter(f => !f.documentId && f.status !== 'error')
+
+    if (filesToUpload.length === 0) {
+      // All files were already uploaded or errored — collect already-uploaded docs
+      const alreadyUploaded = pendingFiles.filter(f => f.documentId && f.document)
+        .map(f => f.document)
+      return { successDocs: alreadyUploaded, failedNames: [] }
+    }
+
+    setIsUploading(true)
+
+    const results = await Promise.all(
+      filesToUpload.map(f => uploadSingleFile(f.file, chatId, f.originalIndex))
+    )
+
+    setIsUploading(false)
+
+    const successDocs = results.filter(r => r && !r._error)
+    const failedNames = results.filter(r => r && r._error).map(r => r.fileName)
+
+    return { successDocs, failedNames }
+  }
+
 
   async function handleSend() {
     const text = input.trim()
-    if (!text || isSending) return
+    const hasFiles = pendingFiles.length > 0
 
-    // 1. Optimistic Instant UI Feedback (0ms delay)
+    if ((!text && !hasFiles) || isSending) return
+
+    // 1. Clear input & lock UI
     setInput('')
     setIsSending(true)
 
-    const userMsg = { id: uid(), role: 'user', content: text, ts: Date.now() }
-
-    // Instantly transition from empty state to conversation view with typing indicator
-    setMessage((prevMessages) => {
-      const withoutTyping = prevMessages.filter(m => !m.typing);
-      return [
-        ...withoutTyping,
-        userMsg,
-        {
-          id: 'typing-indicator',
-          role: 'assistant',
-          content: '',
-          typing: true,
-          ts: Date.now()
-        }
-      ];
-    });
+    // Capture file names before any state changes
+    const fileNames = pendingFiles.map(f => f.name)
+    const fileCount = pendingFiles.length
 
     try {
       let targetChatId = activeChatId
 
-      // 2. If new conversation, create the session on the backend
+      // 2. If new conversation, create the session on the backend first
       if (!targetChatId) {
-        targetChatId = await handleNewChat({ programmatic: true, draftText: text })
+        targetChatId = await handleNewChat({ programmatic: true, draftText: text || pendingFiles[0]?.name || 'Document chat' })
         if (!targetChatId) {
           setIsSending(false)
-          setMessage((prev) => prev.filter(m => !m.typing))
           return
         }
       }
 
+      // 3. Upload files FIRST (before showing user message)
+      let uploadedDocuments = []
+      if (hasFiles) {
+        const { successDocs, failedNames } = await uploadAllPendingFiles(targetChatId)
+        uploadedDocuments = successDocs
+
+        // If ALL uploads failed, show error and abort
+        if (successDocs.length === 0 && failedNames.length > 0) {
+          setIsSending(false)
+          setMessage(prev => [...prev, {
+            id: uid(),
+            role: 'assistant',
+            content: `❌ Could not upload document${failedNames.length > 1 ? 's' : ''}: ${failedNames.join(', ')}. Please try again.`,
+            ts: Date.now(),
+            error: true,
+          }])
+          return
+        }
+
+        // If some failed, warn the user but continue with successful ones
+        if (failedNames.length > 0) {
+          setMessage(prev => [...prev, {
+            id: uid(),
+            role: 'assistant',
+            content: `⚠️ Failed to upload: ${failedNames.join(', ')}. Continuing with ${successDocs.length} uploaded document(s).`,
+            ts: Date.now(),
+            error: true,
+          }])
+        }
+      }
+
+      // 4. Build the user message WITH document data from upload response
+      const attachmentInfo = uploadedDocuments.map(doc => ({
+        fileName: doc.fileName,
+        documentId: doc._id,
+      }))
+
+      const documentIds = uploadedDocuments.map(doc => doc._id)
+
+      const userMsg = {
+        id: uid(),
+        role: 'user',
+        content: text || (uploadedDocuments.length > 0 ? `Uploaded ${uploadedDocuments.length} document(s)` : ''),
+        ts: Date.now(),
+        attachments: attachmentInfo.length > 0 ? attachmentInfo : undefined,
+      }
+
+      // 5. NOW show user message + typing indicator
+      setMessage((prevMessages) => {
+        const withoutTyping = prevMessages.filter(m => !m.typing);
+        return [
+          ...withoutTyping,
+          userMsg,
+          {
+            id: 'typing-indicator',
+            role: 'assistant',
+            content: '',
+            typing: true,
+            ts: Date.now()
+          }
+        ];
+      });
+
       dispatch(addMessage({ chatId: targetChatId, message: userMsg }))
       dispatch(updateCurrentChatTitleIfNeeded(text))
 
-      // Update title on server asynchronously in background without blocking socket
+      // Update title on server in background
       const currentChat = chats.find(c => (c.id || c._id) === targetChatId)
       if (currentChat && currentChat.title === 'New chat' && (!currentChat.messages || currentChat.messages.length === 0)) {
-        const newTitle = text.slice(0, 30)
+        const newTitle = (text || fileNames[0] || 'Document chat').slice(0, 30)
         axios.patch(`${API_BASE_URL}/api/chat/${targetChatId}`, { title: newTitle }, { withCredentials: true })
           .catch(err => console.warn('Failed to update chat title:', err?.message))
       }
@@ -255,11 +414,17 @@ const Home = () => {
         return
       }
 
-      // 3. Emit message to AI over socket
+      // 6. Emit message to AI over socket with document IDs from upload response
       socket.emit("ai-message", {
         chat: targetChatId,
-        content: text
+        content: text || `I've uploaded ${fileCount} document(s). Please analyze them.`,
+        documentIds: documentIds.length > 0 ? documentIds : undefined,
       });
+
+      // 7. Clear pending files after successful send
+      setPendingFiles([])
+      // Keep track of uploaded docs for this chat session
+      setUploadedDocs(prev => [...prev, ...uploadedDocuments])
 
     } catch (error) {
       console.error('Error in handleSend:', error)
@@ -296,6 +461,9 @@ const Home = () => {
     if (!isProgrammatic) {
       setInput('')
       setMessage([])
+      // Clear files when starting a new chat
+      setPendingFiles([])
+      setUploadedDocs([])
     }
 
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 960px)').matches) {
@@ -315,7 +483,13 @@ const Home = () => {
           id: msg._id,
           role: msg.role == 'user' ? "user" : "assistant",
           content: msg.content,
-          ts: new Date(msg.createdAt).getTime()
+          ts: new Date(msg.createdAt).getTime(),
+          attachments: msg.attachments && msg.attachments.length > 0
+            ? msg.attachments.map(att => ({
+              fileName: att.fileName || att.document?.fileName || 'Document',
+              documentId: att.document?._id || att.document,
+            }))
+            : undefined,
         })))
       }
     } catch (error) {
@@ -329,13 +503,18 @@ const Home = () => {
     if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 960px)').matches) {
       setSidebarOpen(false)
     }
+
+    // Clear files when switching chats
+    setPendingFiles([])
+    setUploadedDocs([])
+
     getMessages(id)
   }
 
   async function handleDeleteChat(chatId) {
     const chatToDelete = chats.find(c => (c._id || c.id) === chatId)
     const chatTitle = chatToDelete?.title || 'this chat'
-    
+
 
 
 
@@ -347,6 +526,8 @@ const Home = () => {
 
       if (activeChatId === chatId) {
         setMessage([])
+        setPendingFiles([])
+        setUploadedDocs([])
       }
     } catch (err) {
       console.error('Failed to delete chat from server:', err?.response?.data || err?.message)
@@ -354,6 +535,8 @@ const Home = () => {
       dispatch(deleteChatAction(chatId))
       if (activeChatId === chatId) {
         setMessage([])
+        setPendingFiles([])
+        setUploadedDocs([])
       }
     }
   }
@@ -362,7 +545,7 @@ const Home = () => {
     try {
       // Update on server
       await axios.patch(`${API_BASE_URL}/api/chat/${chatId}`, { title: newTitle }, { withCredentials: true })
-      
+
       // Update local state
       const updatedChats = chats.map(chat => {
         const id = chat._id || chat.id
@@ -408,19 +591,19 @@ const Home = () => {
 
   const handleConfirmLogout = async () => {
     setShowLogoutModal(false)
-    
+
     try {
       // Clear authentication token by making logout request to server
       await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true })
-      
+
       // Clear local storage
       localStorage.removeItem('chats_v1')
       localStorage.removeItem('activeChatId_v1')
-      
+
       navigate('/login')
     } catch (err) {
       console.error('Logout failed:', err?.response?.data || err?.message)
-     
+
       localStorage.clear()
       navigate('/login')
     }
@@ -463,7 +646,7 @@ const Home = () => {
         onClose={handleCloseSidebar}
       />
 
-     
+
       <main className="chat-main">
         <ChatHeader
           sidebarOpen={sidebarOpen}
@@ -480,10 +663,14 @@ const Home = () => {
             onChange={setInput}
             onSend={handleSend}
             disabled={isSending}
+            files={pendingFiles}
+            onFilesChange={handleFilesChange}
+            onRemoveFile={handleRemoveFile}
+            isUploading={isUploading}
           />}
       </main>
 
-            {/* Backdrop for mobile when sidebar open */}
+      {/* Backdrop for mobile when sidebar open */}
       {sidebarOpen && <div className="backdrop" onClick={handleCloseSidebar} />}
 
       {/* Logout Confirmation Modal */}
@@ -498,14 +685,14 @@ const Home = () => {
               <p className="logout-warning-text">You will be redirected to the login page.</p>
             </div>
             <div className="logout-modal-actions">
-              <button 
-                className="btn-cancel" 
+              <button
+                className="btn-cancel"
                 onClick={handleCancelLogout}
               >
                 Cancel
               </button>
-              <button 
-                className="btn-logout" 
+              <button
+                className="btn-logout"
                 onClick={handleConfirmLogout}
               >
                 Logout
