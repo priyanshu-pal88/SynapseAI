@@ -25,7 +25,8 @@ const Messages = ({ message }) => {
     if (!url) return
 
     try {
-      const response = await fetch(url)
+      // Try cross-origin fetch with no-cors fallback
+      const response = await fetch(url, { mode: 'cors' })
       if (!response.ok) throw new Error('Fetch failed')
       const blob = await response.blob()
       const blobUrl = window.URL.createObjectURL(blob)
@@ -37,7 +38,15 @@ const Messages = ({ message }) => {
       document.body.removeChild(link)
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
     } catch (err) {
-      window.open(url, '_blank', 'noopener,noreferrer')
+      // Fallback: use anchor with download attribute, then open in new tab
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName || 'document.pdf'
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
   }
 
@@ -135,15 +144,26 @@ const Messages = ({ message }) => {
                               <span className="msg-file-type">PDF</span>
                             </div>
                             {fileUrl && (
-                              <button
-                                type="button"
-                                className="msg-file-dl-btn"
-                                onClick={(e) => handleDownloadPdf(e, fileUrl, docName)}
-                                title="Download PDF"
-                                aria-label="Download PDF"
-                              >
-                                <i className="ri-download-2-line"></i>
-                              </button>
+                              <div className="msg-file-actions">
+                                <button
+                                  type="button"
+                                  className="msg-file-action-btn"
+                                  onClick={(e) => handleOpenPdf(e, fileUrl)}
+                                  title="Open PDF"
+                                  aria-label="Open PDF"
+                                >
+                                  <i className="ri-external-link-line"></i>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="msg-file-action-btn"
+                                  onClick={(e) => handleDownloadPdf(e, fileUrl, docName)}
+                                  title="Download PDF"
+                                  aria-label="Download PDF"
+                                >
+                                  <i className="ri-download-2-line"></i>
+                                </button>
+                              </div>
                             )}
                           </div>
                         );

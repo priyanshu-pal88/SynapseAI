@@ -23,7 +23,6 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'
-// const API_BASE_URL = 'http://localhost:3000'
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
@@ -478,17 +477,33 @@ const Home = () => {
       console.log('Messages response:', response);
 
       if (response.data && response.data.messages) {
+        // Debug: log raw attachment data for first message with attachments
+        const msgWithAttachments = response.data.messages.find(m => m.attachments && m.attachments.length > 0)
+        if (msgWithAttachments) {
+          console.log('Raw attachment data sample:', JSON.stringify(msgWithAttachments.attachments, null, 2))
+        }
+
         setMessage(response.data.messages.reverse().map(msg => ({
           id: msg._id,
           role: msg.role === 'user' ? "user" : "assistant",
           content: msg.content,
           ts: new Date(msg.createdAt).getTime(),
           attachments: msg.attachments && msg.attachments.length > 0
-            ? msg.attachments.map(att => ({
-              fileName: att.fileName || att.document?.fileName || 'Document',
-              documentId: att.document?._id || att.document,
-              fileUrl: att.document?.fileUrl || att.document?.fileURl || att.fileUrl || att.fileURl || null,
-            }))
+            ? msg.attachments.map(att => {
+              // Handle both populated document object and raw document ID
+              const doc = typeof att.document === 'object' ? att.document : null
+              const resolvedFileUrl = doc?.fileUrl || doc?.fileURl || att.fileUrl || att.fileURl || null
+              
+              if (!resolvedFileUrl) {
+                console.warn('No fileUrl found for attachment:', att)
+              }
+              
+              return {
+                fileName: att.fileName || doc?.fileName || 'Document',
+                documentId: doc?._id || att.document,
+                fileUrl: resolvedFileUrl,
+              }
+            })
             : undefined,
         })))
       }

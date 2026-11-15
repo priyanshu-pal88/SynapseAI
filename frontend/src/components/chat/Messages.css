@@ -456,7 +456,14 @@
   color: var(--text-muted);
 }
 
-.msg-file-dl-btn {
+.msg-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.msg-file-action-btn {
   width: 26px;
   height: 26px;
   border-radius: var(--radius-sm);
@@ -472,12 +479,12 @@
   transition: all var(--duration-fast) var(--ease-spring);
 }
 
-.msg-file-dl-btn:hover {
+.msg-file-action-btn:hover {
   background: rgba(99, 102, 241, 0.25);
   color: #fff;
   transform: scale(1.1);
 }
 
-.msg-file-dl-btn:active {
+.msg-file-action-btn:active {
   transform: scale(0.92);
 }
